@@ -26,3 +26,11 @@
 *.exe
 *.out
 *.app
+
+*.log
+*.tlog
+
+Master/Debug
+Master/Release
+ConsoleTest/Debug
+ConsoleTest/Release

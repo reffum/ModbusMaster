@@ -27,6 +27,12 @@
     <ClInclude Include="src\Serial.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\Exceptions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Tcp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Master.cpp">
@@ -36,6 +42,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Serial.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Tcp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

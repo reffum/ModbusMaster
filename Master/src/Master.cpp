@@ -40,10 +40,13 @@ namespace Modbus
 #pragma pack()
 #endif
 
+	const int BroadcastID = 255;
+
 	/**
 	 * Modbus function codes.
 	 **/
 	const uint8_t ReadHoldFuncCode = 3;
+	const uint8_t WriteSingleFuncCode = 6;
 
 	/**
 	 * Modbus PDU sizes.
@@ -70,6 +73,11 @@ namespace Modbus
 	{
 		assert(regsValue);
 		assert(regsNumber <= ReadHoldMaxRegisters);
+		
+		if (id == BroadcastID)
+		{
+			throw std::logic_error("Broadcast ReadHold reques.");
+		}
 
 		ReadHoldReqPdu reqPdu;
 
@@ -81,7 +89,7 @@ namespace Modbus
 		reqPdu.addr = _byteswap_ushort(regsStartAddr);
 		reqPdu.count = _byteswap_ushort(regsNumber);
 
-		processPdu((uint8_t*)&reqPdu, sizeof(reqPdu), responce, respSize);
+		SendPdu(id, (uint8_t*)&reqPdu, sizeof(reqPdu), responce, respSize);
 		
 		/**
 		 * Check modbus exception.
@@ -117,6 +125,14 @@ namespace Modbus
 		{
 			regsValue[i] = _byteswap_ushort(respPdu->data[i]);
 		}
+	}
+
+	/**
+	* Modbus request Write Single
+	**/
+	void Master::WriteSingle(uint8_t id, uint16_t regAddr, uint16_t regValue)
+	{
+
 	}
 
 }

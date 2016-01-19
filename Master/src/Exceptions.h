@@ -10,12 +10,7 @@
 
 namespace Modbus
 {
-	class ConnectException : public std::exception
-	{
-	public:
-		ConnectException(const char *);
-		ConnectException(const std::string& );
-	};
+
 }
 
 #endif	/* _EXCEPTIONS_H_ */

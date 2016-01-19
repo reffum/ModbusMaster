@@ -8,6 +8,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <exception>
 
 namespace Modbus
 {
@@ -19,6 +20,13 @@ namespace Modbus
 	public:
 		ExceptionCode(uint8_t c) :code(c){}
 		uint8_t code;
+	};
+
+	class ConnectException : public std::exception
+	{
+	public:
+		ConnectException(const char *);
+		ConnectException(const std::string&);
 	};
 
 	class InvalidResponcePdu
@@ -64,7 +72,8 @@ namespace Modbus
 		/**
 		 * Form FDU from PDU, send it, receive responce and return it in respPdu.
 		 **/
-		virtual void processPdu(
+		virtual void SendPdu(
+			uint8_t id,
 			uint8_t* reqPdu,
 			int reqPduSize,
 			void* respPdu,
@@ -83,6 +92,11 @@ namespace Modbus
 		* Modbus request Read Hold.
 		**/
 		void ReadHold(uint8_t id, uint16_t regsStartAddr, uint16_t regsNumber, uint16_t* regsValue);
+
+		/**
+		 * Modbus request Write Single
+		 **/
+		void WriteSingle(uint8_t id, uint16_t regAddr, uint16_t regValue);
 	};
 }
 

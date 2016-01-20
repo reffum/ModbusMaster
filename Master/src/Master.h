@@ -32,14 +32,8 @@ namespace Modbus
 	class InvalidResponcePdu
 	{
 	public:
-		InvalidResponcePdu(uint8_t* req, int reqSize,
-			uint8_t* resp, int respSize)
-		{
-			for (int i = 0; i < reqSize; i++)
-				reqPdu.push_back(req[i]);
-			for (int i = 0; i < respSize; i++)
-				respPdu.push_back(resp[i]);
-		}
+		InvalidResponcePdu(std::vector<uint8_t> req, std::vector<uint8_t> resp)
+			:reqPdu(req), respPdu(resp){}
 
 		std::vector<uint8_t> reqPdu;
 		std::vector<uint8_t> respPdu;
@@ -48,45 +42,23 @@ namespace Modbus
 	class InvalidResponceFdu
 	{
 	public:
-		InvalidResponceFdu(uint8_t* req, int reqSize,
-			uint8_t* resp, int respSize)
-		{
-			for (int i = 0; i < reqSize; i++)
-				reqPdu.push_back(req[i]);
-			for (int i = 0; i < respSize; i++)
-				respPdu.push_back(resp[i]);
-		}
+		InvalidResponceFdu(std::vector<uint8_t> req, std::vector<uint8_t> resp)
+			:reqPdu(req), respPdu(resp){}
 
 		std::vector<uint8_t> reqPdu;
 		std::vector<uint8_t> respPdu;
 	};
 
-
 	class Master
 	{
 	public:
+		/**
+		 * Constants
+		 **/
+		const int BroadcastID = 255;
+
 		Master();
 		~Master();
-
-
-		/**
-		 * Form FDU from PDU, send it, receive responce and return it in respPdu.
-		 **/
-		virtual void SendPdu(
-			uint8_t id,
-			uint8_t* reqPdu,
-			int reqPduSize,
-			void* respPdu,
-			int &respPduSize
-			) = 0;
-
-		virtual void SendRequestAndReceiveResponce(
-			uint8_t* req,
-			int reqSize,
-			uint8_t* resp,
-			int &respSize
-			) = 0;
-
 
 		/**
 		* Modbus request Read Hold.
@@ -94,9 +66,26 @@ namespace Modbus
 		void ReadHold(uint8_t id, uint16_t regsStartAddr, uint16_t regsNumber, uint16_t* regsValue);
 
 		/**
-		 * Modbus request Write Single
-		 **/
+		* Modbus request Write Single.
+		**/
 		void WriteSingle(uint8_t id, uint16_t regAddr, uint16_t regValue);
+
+
+		/**
+		 * Send PDU, receive responce and return it in respPdu.
+		 **/
+		virtual std::vector<uint8_t> SendPduAndReceive(uint8_t id, std::vector<uint8_t> requestPdu) = 0;
+
+		/**
+		 * Send PDU and do not wait responce.
+		 **/
+		virtual void SendPdu(uint8_t id, std::vector<uint8_t> requestPdu) = 0;
+
+
+		/**
+		 * Send FDU to to physical layer without responce
+		 **/
+		virtual void SendFdu(std::vector<uint8_t>) = 0;
 	};
 }
 

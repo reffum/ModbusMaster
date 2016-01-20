@@ -9,39 +9,43 @@
 
 namespace Modbus
 {
-
+	using namespace std;
 	/**
 	 * Modbus PDU structures.
 	 **/
 #ifdef _MSC_VER
 #pragma pack(1)
 #endif
-	struct ExceptionResponcePdu
+	struct ExceptionPdu
 	{
 		uint8_t func;
 		uint8_t code;
 	};
 
-	struct ReadHoldReqPdu
+	struct ReadHoldRequestPdu
 	{
 		uint8_t func;
 		uint16_t addr;
 		uint16_t count;
 	};
 
-	struct ReadHoldRespPdu
+	struct ReadHoldResponcePdu
 	{
 		uint8_t func;
 		uint8_t count;
 		uint16_t data[1];
 	};
 
+	struct WriteSinglePdu
+	{
+		uint8_t func;
+		uint16_t addr;
+		uint16_t value;
+	};
+
 #ifdef _MSC_VER
 #pragma pack()
 #endif
-
-	const int BroadcastID = 255;
-
 	/**
 	 * Modbus function codes.
 	 **/
@@ -53,7 +57,7 @@ namespace Modbus
 	 **/
 	const int ReadHoldMaxRegisters = 125;
 	const int ReadHoldMaxResponceSize = ReadHoldMaxRegisters * 2 + 2;
-	const int ExceptionRespPduSize = sizeof(ExceptionResponcePdu);
+	const int ExceptionPduSize = sizeof(ExceptionPdu);
 
 
 	Master::Master()
@@ -79,25 +83,23 @@ namespace Modbus
 			throw std::logic_error("Broadcast ReadHold reques.");
 		}
 
-		ReadHoldReqPdu reqPdu;
-
-		uint8_t responce[ReadHoldMaxResponceSize];
-		int respSize;
+		ReadHoldRequestPdu reqPdu;
 
 		// Store Request PDU
 		reqPdu.func = ReadHoldFuncCode;
 		reqPdu.addr = _byteswap_ushort(regsStartAddr);
 		reqPdu.count = _byteswap_ushort(regsNumber);
 
-		SendPdu(id, (uint8_t*)&reqPdu, sizeof(reqPdu), responce, respSize);
+		vector<uint8_t> request((uint8_t*)&reqPdu, (uint8_t*)&reqPdu + sizeof(reqPdu));
+		vector<uint8_t> responce = SendPduAndReceive(id, request);
 		
 		/**
 		 * Check modbus exception.
 		 **/
 		if ((responce[0] == (ReadHoldFuncCode | 0x80)) &&
-			(respSize == ExceptionRespPduSize))
+			(responce.size() == ExceptionPduSize))
 		{
-			ExceptionResponcePdu *erp = (ExceptionResponcePdu*)responce;
+			ExceptionPdu *erp = (ExceptionPdu*)(responce.data());
 			throw ExceptionCode(erp->code);
 		}
 
@@ -105,17 +107,17 @@ namespace Modbus
 		 * Check responce PDU correction
 		 **/
 		const int expectedRespSize = 2 + regsNumber * 2;
-		const ReadHoldRespPdu *respPdu = (ReadHoldRespPdu *)responce;
+		if (expectedRespSize != responce.size())
+		{
+			throw InvalidResponcePdu(request, responce);
+		}
 
-		if ((expectedRespSize != respSize)		||
-			(respPdu->func != ReadHoldFuncCode)	||
+		ReadHoldResponcePdu *respPdu = (ReadHoldResponcePdu *)responce.data();
+
+		if ((respPdu->func != ReadHoldFuncCode)	||
 			(respPdu->count != regsNumber*2))
 		{
-			throw InvalidResponcePdu(
-				(uint8_t*)&reqPdu, 
-				sizeof(reqPdu), 
-				(uint8_t*)responce, 
-				respSize);
+			throw InvalidResponcePdu(request, responce);
 		}
 
 		/**
@@ -132,7 +134,38 @@ namespace Modbus
 	**/
 	void Master::WriteSingle(uint8_t id, uint16_t regAddr, uint16_t regValue)
 	{
+		WriteSinglePdu reqPdu;
+		reqPdu.func = WriteSingleFuncCode;
+		reqPdu.addr = _byteswap_ushort(regAddr);
+		reqPdu.value = _byteswap_ushort(regValue);
 
+		vector<uint8_t> request((uint8_t*)&reqPdu, (uint8_t*)&reqPdu + sizeof(WriteSinglePdu));
+		
+		if (id == BroadcastID)
+		{
+			SendPdu(id, request);
+			return;
+		}
+
+		vector<uint8_t> responce = SendPduAndReceive(id, request);
+
+		/**
+		 * Check modbus exception
+		 **/
+		if ((responce.size() == ExceptionPduSize) && 
+			(responce[0] == (WriteSingleFuncCode | 0x80)))
+		{
+			ExceptionPdu *ep = (ExceptionPdu*)(responce.data());
+			throw ExceptionCode(ep->code);
+		}
+
+		/**
+		 * Check PDU responce correction.
+		 **/
+		if (request != responce)
+		{
+			throw InvalidResponcePdu(request, responce);
+		}
 	}
 
 }

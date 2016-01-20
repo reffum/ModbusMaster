@@ -15,31 +15,49 @@ namespace Modbus
 	class AsciiFdu : public virtual Master
 	{
 	public:
-		static const int MaxFduSize = 1024;
-
 		AsciiFdu();
 		~AsciiFdu();
 
 		/**
 		* Form FDU from PDU, send it, receive responce and return it in respPdu.
 		**/
-		virtual void processPdu(
-			uint8_t* reqPdu,
-			int reqPduSize,
-			void* respPdu,
-			int &respPduSize
-		);
-
-		uint8_t byte2ascii(uint8_t);
-		uint8_t lchar(uint8_t);
-		uint8_t hchar(uint8_t);
+		virtual std::vector<uint8_t> SendPduAndReceive(uint8_t id, std::vector<uint8_t> requestPdu);
 
 		/**
-		 * FDU buffers 
-		 **/
-		uint8_t ReqFdu[MaxFduSize];
-		uint8_t RespFdu[MaxFduSize];
+		* Send PDU and do not wait responce.
+		**/
+		void SendPdu(uint8_t id, std::vector<uint8_t> requestPdu);
 
+	private:
+		std::vector<uint8_t> receiveAsciiResponceFdu();
+
+		/**
+		 * Convert low and high part of byte to ASCII symbol
+		 **/
+		uint8_t lbyte2ascii(const uint8_t);
+		uint8_t hbyte2ascii(const uint8_t);
+		uint8_t byte2ascii(const uint8_t);
+
+		/**
+		 * Convert high and low chars to byte
+		 **/
+		uint8_t ascii2byte(const uint8_t l, const uint8_t h);
+		uint8_t ascii2byte(const uint8_t ch);
+
+		/**
+		 * Return ASCII LRC check sum
+		 **/
+		uint8_t getLrc(std::vector<uint8_t>);
+
+		/**
+		 * Get ASCII FDU
+		 **/
+		std::vector<uint8_t> getFdu(uint8_t id, std::vector<uint8_t> requestPdu);
+
+		/**
+		 * Get ID + PDU + LRC from FDU
+		 **/
+		std::vector<uint8_t> getPdu(std::vector<uint8_t>);
 	};
 
 }

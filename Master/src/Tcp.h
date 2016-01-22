@@ -7,19 +7,14 @@
 #define _TCP_H_
 
 #include <cstdint>
-#include <winsock.h>
+#include <winsock2.h>
+#include "Master.h"
 
 namespace Modbus
 {
-	class Tcp
+	class Tcp : public virtual Master
 	{
 	public:
-		/**
-		 * Constants.
-		 **/
-		static const int NO_TIMEOUT = -1;
-
-
 		Tcp();
 		~Tcp();
 
@@ -35,16 +30,14 @@ namespace Modbus
 		void Disconnect();
 
 		/**
-		 * Send data to Modbus slave
-		 * Exception: SendException.
-		 **/
-		void Send(uint8_t* data, int len);
+		* Send FDU to to physical layer without responce
+		**/
+		void SendFdu(std::vector<uint8_t>);
 
 		/**
-		 * Receive data from Modbus slave
-		 * Exception: ReceiveException.
-		 **/
-		void Receive(uint8_t* data, int len, const int timeout = NO_TIMEOUT);
+		* Receive one FDU symbol from physical layer with timeout.
+		**/
+		uint8_t ReceiveOneFduSymbol(std::chrono::milliseconds timeout);
 
 	private:
 		SOCKET sock;

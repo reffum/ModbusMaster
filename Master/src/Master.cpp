@@ -75,6 +75,9 @@ namespace Modbus
 		uint16_t regsNumber, 
 		uint16_t* regsValue)
 	{
+		_RPTF4(_CRT_WARN, "Master::ReadHold(%hhu, %hu, %hu, %p)\n", id, regsStartAddr, 
+			regsNumber, regsValue);
+
 		assert(regsValue);
 		assert(regsNumber <= ReadHoldMaxRegisters);
 		
@@ -91,8 +94,26 @@ namespace Modbus
 		reqPdu.count = _byteswap_ushort(regsNumber);
 
 		vector<uint8_t> request((uint8_t*)&reqPdu, (uint8_t*)&reqPdu + sizeof(reqPdu));
+
+#ifdef _DEBUG
+		_RPTF0(_CRT_WARN, "Request PDU:");
+		for each (uint8_t ch in request)
+		{
+			_RPT1(_CRT_WARN, "%hhX ", ch);
+		}
+		_RPT0(_CRT_WARN, "\n");
+#endif
+
 		vector<uint8_t> responce = SendPduAndReceive(id, request);
-		
+
+#ifdef _DEBUG
+		_RPTF0(_CRT_WARN, "Responce PDU:");
+		for each (uint8_t ch in responce)
+		{
+			_RPT1(_CRT_WARN, "%hhX ", ch);
+		}
+		_RPT0(_CRT_WARN, "\n");
+#endif
 		/**
 		 * Check modbus exception.
 		 **/
@@ -100,6 +121,9 @@ namespace Modbus
 			(responce.size() == ExceptionPduSize))
 		{
 			ExceptionPdu *erp = (ExceptionPdu*)(responce.data());
+
+			_RPTF1(_CRT_WARN, "Exception code:%hX", erp->code);
+
 			throw ExceptionCode(erp->code);
 		}
 
@@ -109,6 +133,7 @@ namespace Modbus
 		const int expectedRespSize = 2 + regsNumber * 2;
 		if (expectedRespSize != responce.size())
 		{
+			_RPTF0(_CRT_WARN, "Responce PDU have incorrect format.");
 			throw InvalidResponcePdu(request, responce);
 		}
 
@@ -117,6 +142,7 @@ namespace Modbus
 		if ((respPdu->func != ReadHoldFuncCode)	||
 			(respPdu->count != regsNumber*2))
 		{
+			_RPTF0(_CRT_WARN, "Responce PDU have incorrect format.");
 			throw InvalidResponcePdu(request, responce);
 		}
 
@@ -135,11 +161,23 @@ namespace Modbus
 	void Master::WriteSingle(uint8_t id, uint16_t regAddr, uint16_t regValue)
 	{
 		WriteSinglePdu reqPdu;
+
+		_RPTF3(_CRT_WARN, "Master::WriteSingle(%hhu, %hu, %hu)", id, regAddr, regValue);
+
 		reqPdu.func = WriteSingleFuncCode;
 		reqPdu.addr = _byteswap_ushort(regAddr);
 		reqPdu.value = _byteswap_ushort(regValue);
 
 		vector<uint8_t> request((uint8_t*)&reqPdu, (uint8_t*)&reqPdu + sizeof(WriteSinglePdu));
+
+#ifdef _DEBUG
+		_RPTF0(_CRT_WARN, "Request:");
+		for each (uint8_t ch in request)
+		{
+			_RPT1(_CRT_WARN, " %hhX", ch);
+		}
+		_RPT0(_CRT_WARN, "\n");
+#endif
 		
 		if (id == BroadcastID)
 		{
@@ -149,6 +187,15 @@ namespace Modbus
 
 		vector<uint8_t> responce = SendPduAndReceive(id, request);
 
+#ifdef _DEBUG
+		_RPTF0(_CRT_WARN, "Responce:");
+		for each (uint8_t ch in responce)
+		{
+			_RPT1(_CRT_WARN, " %hhX", ch);
+		}
+		_RPT0(_CRT_WARN, "\n");
+#endif
+
 		/**
 		 * Check modbus exception
 		 **/
@@ -156,6 +203,9 @@ namespace Modbus
 			(responce[0] == (WriteSingleFuncCode | 0x80)))
 		{
 			ExceptionPdu *ep = (ExceptionPdu*)(responce.data());
+
+			_RPTF1(_CRT_WARN, "Exception code: %hX", ep->code);
+
 			throw ExceptionCode(ep->code);
 		}
 

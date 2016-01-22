@@ -45,6 +45,11 @@ namespace Modbus
 		uint8_t ascii2byte(const uint8_t ch);
 
 		/**
+		 * Check that is this a ASCII symbol.
+		 **/
+		bool isAscii(uint8_t);
+
+		/**
 		 * Return ASCII LRC check sum
 		 **/
 		uint8_t getLrc(std::vector<uint8_t>);

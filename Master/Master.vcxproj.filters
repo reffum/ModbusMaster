@@ -33,6 +33,9 @@
     <ClInclude Include="src\Tcp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\ModbusMasterAsciiTCP.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Master.cpp">

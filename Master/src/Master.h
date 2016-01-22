@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <vector>
 #include <exception>
+#include <chrono>
 
 namespace Modbus
 {
@@ -25,8 +26,19 @@ namespace Modbus
 	class ConnectException : public std::exception
 	{
 	public:
-		ConnectException(const char *);
-		ConnectException(const std::string&);
+		ConnectException(const char * str)		: exception(str){}
+	};
+
+	class SendException : public std::exception
+	{
+	public :
+		SendException(const char* str) : exception(str){}
+	};
+
+	class ReceiveException : public std::exception
+	{
+	public:
+		ReceiveException(const char* str) : exception(str){}
 	};
 
 	class InvalidResponcePdu
@@ -44,9 +56,16 @@ namespace Modbus
 	public:
 		InvalidResponceFdu(std::vector<uint8_t> req, std::vector<uint8_t> resp)
 			:reqPdu(req), respPdu(resp){}
+		InvalidResponceFdu(std::vector<uint8_t> resp) :respPdu(resp){}
 
 		std::vector<uint8_t> reqPdu;
 		std::vector<uint8_t> respPdu;
+	};
+
+	class TimeoutException
+	{
+	public:
+		TimeoutException(){}
 	};
 
 	class Master
@@ -86,6 +105,12 @@ namespace Modbus
 		 * Send FDU to to physical layer without responce
 		 **/
 		virtual void SendFdu(std::vector<uint8_t>) = 0;
+
+
+		/**
+		 * Receive one FDU symbol from physical layer with timeout.
+		 **/
+		virtual uint8_t ReceiveOneFduSymbol(std::chrono::milliseconds timeout) = 0;
 	};
 }
 

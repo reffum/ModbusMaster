@@ -7,6 +7,7 @@
 #include <cassert>
 #include <cctype>
 #include <chrono>
+#include <crtdbg.h>
 #include "AsciiFdu.h"
 
 namespace Modbus
@@ -33,7 +34,18 @@ namespace Modbus
 	**/
 	void AsciiFdu::SendPdu(uint8_t id, vector<uint8_t> requestPdu)
 	{
-		SendFdu(getFdu(id, requestPdu));
+		_RPTF0(_CRT_WARN, "Ascii::SendFdu()");
+
+		vector<uint8_t> fdu = getFdu(id, requestPdu);
+#ifdef _DEBUG
+		_RPTF0(_CRT_WARN, "FDU:");
+		for each (uint8_t ch in fdu)
+		{
+			_RPT1(_CRT_WARN, " %hhX", ch);
+		}
+		_RPT0(_CRT_WARN, "\n");
+#endif
+		SendFdu(fdu);
 	}
 
 	/**
@@ -41,13 +53,34 @@ namespace Modbus
 	**/
 	vector<uint8_t> AsciiFdu::SendPduAndReceive(uint8_t id, vector<uint8_t> requestPdu)
 	{
+		_RPTF0(_CRT_WARN, "Ascii::SendFdu()");
+
 		assert(id != BroadcastID);
 
 		vector<uint8_t> reqFdu = getFdu(id, requestPdu);
 
+#ifdef _DEBUG
+		_RPTF0(_CRT_WARN, "Request FDU:");
+		for each (uint8_t ch in reqFdu)
+		{
+			_RPT1(_CRT_WARN, " %hhX", ch);
+		}
+		_RPT0(_CRT_WARN, "\n");
+#endif
+
 		SendFdu(reqFdu);
 
 		vector<uint8_t> respFdu = receiveAsciiResponceFdu();
+
+#ifdef _DEBUG
+		_RPTF0(_CRT_WARN, "Responce FDU:");
+		for each (uint8_t ch in respFdu)
+		{
+			_RPT1(_CRT_WARN, " %hhX", ch);
+		}
+		_RPT0(_CRT_WARN, "\n");
+#endif
+
 
 		assert(respFdu.size() > 3);
 
@@ -66,6 +99,15 @@ namespace Modbus
 		}
 
 		vector<uint8_t> respPdu = getPdu(respFdu);
+
+#ifdef _DEBUG
+		_RPTF0(_CRT_WARN, "Responce ID + PDU + LRC:");
+		for each (uint8_t ch in respPdu)
+		{
+			_RPT1(_CRT_WARN, " %hhX", ch);
+		}
+		_RPT0(_CRT_WARN, "\n");
+#endif
 
 		assert(respPdu.size() > 3);
 
@@ -91,7 +133,67 @@ namespace Modbus
 
 	vector<uint8_t> AsciiFdu::receiveAsciiResponceFdu()
 	{
+		_RPTF0(_CRT_WARN, "AsciiFdu::receiveAsciiResponceFdu()");
 
+		/** 
+		 * Timeout time moment 
+		 **/
+		auto timeoutTime = high_resolution_clock::now() + AsciiStandartTimeout;
+		milliseconds timeout = AsciiStandartTimeout;
+		vector<uint8_t> fdu;
+		uint8_t symbol;
+
+		_RPTF0(_CRT_WARN, "Received symbols:");
+
+		/**
+		 * Wait SOF
+		 **/
+		do
+		{
+			timeout = duration_cast<milliseconds>(timeoutTime - high_resolution_clock::now());
+
+			if (timeout <= milliseconds::zero())
+			{
+				_RPTF0(_CRT_WARN, "Timeout");
+
+				throw TimeoutException();
+			}
+
+			symbol = ReceiveOneFduSymbol(timeout);
+
+			_RPT1(_CRT_WARN, " %hhX", symbol);
+
+		} while (symbol != ':');
+
+		fdu.push_back(symbol);
+
+		/**
+		 * Wait FDU data
+		 **/
+		do
+		{
+			timeout = duration_cast<milliseconds>(timeoutTime - high_resolution_clock::now());
+
+			if (timeout <= milliseconds::zero())
+			{
+				_RPTF0(_CRT_WARN, "Timeout");
+				throw TimeoutException();
+			}
+
+			symbol = ReceiveOneFduSymbol(timeout);
+			_RPT1(_CRT_WARN, " %hhX", symbol);
+
+			if (!isAscii(symbol))
+			{
+				fdu.push_back(symbol);
+				throw InvalidResponceFdu(fdu);
+			}
+
+		} while (fdu.size() > 3 && *(fdu.cend()) == '\n' && *(fdu.cend() - 1) == '\r');
+
+		_RPTF0(_CRT_WARN, "FDU receive complete.");
+
+		return fdu;
 	}
 
 	vector<uint8_t> AsciiFdu::getFdu(uint8_t id, vector<uint8_t> requestPdu)
@@ -198,5 +300,13 @@ namespace Modbus
 		}
 
 		return pdu;
+	}
+
+	/**
+	* Check that is this a ASCII symbol.
+	**/
+	bool AsciiFdu::isAscii(uint8_t ch)
+	{
+		return isxdigit(ch) || ch == '\r' || ch == '\n';
 	}
 }

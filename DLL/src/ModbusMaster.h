@@ -52,16 +52,28 @@ LIBSPEC int ModbusTCP_Close();
 LIBSPEC int PUT(uint8_t id, uint16_t addr, uint16_t value);
 
 /**
- * Read hold registers
+ * Read 1 register
  * id		Slave ID
  * addr		Registers start address
- * count	count of read registers
- * buffer	data buffer for registers value
+ * value	Register value
  * Return:	MODBUS_MASTER_SUCCESS
  *			MODBUS_MASTER_TCP_ERROR
  *			MODBUS_MASTER_TIMEOUT_ERROR
  *			< 0 - Modbus exception with code by absolute value.
  **/
-LIBSPEC int GET(uint8_t id, uint16_t addr, uint16_t len, uint16_t* buffer);
+LIBSPEC int GET(uint8_t id, uint16_t addr, uint16_t len, uint16_t& value);
+
+/**
+* Read hold registers
+* id		Slave ID
+* addr		Registers start address
+* count		count of read registers
+* buffer	data buffer for registers value
+* Return:	MODBUS_MASTER_SUCCESS
+*			MODBUS_MASTER_TCP_ERROR
+*			MODBUS_MASTER_TIMEOUT_ERROR
+*			< 0 - Modbus exception with code by absolute value.
+**/
+LIBSPEC int TCP_ReadHold(uint8_t id, uint16_t addr, uint16_t count, uint16_t* buffer);
 
 #endif /* _MODBUS_MASTER_H_ */

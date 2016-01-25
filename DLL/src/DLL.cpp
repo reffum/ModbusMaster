@@ -147,25 +147,25 @@ LIBSPEC int PUT(uint8_t id, uint16_t addr, uint16_t value)
 *			MODBUS_MASTER_TIMEOUT_ERROR
 *			< 0 - Modbus exception with code by absolute value.
 **/
-LIBSPEC int GET(uint8_t id, uint16_t addr, uint16_t len, uint16_t* buffer)
+LIBSPEC int TCP_ReadHold(uint8_t id, uint16_t addr, uint16_t count, uint16_t* buffer)
 {
 	static uint8_t byteBuffer[Master::ReadHoldMaxRegisters];
 
-	_RPTF4(_CRT_WARN, "GET(%hhu, %hX, %hX, %hX, %p)", id, addr, len, buffer);
+	_RPTF4(_CRT_WARN, "GET(%hhu, %hX, %hX, %hX, %p)", id, addr, count, buffer);
 	assert(buffer);
-	assert(len <= Master::ReadHoldMaxRegisters);
+	assert(count <= Master::ReadHoldMaxRegisters);
 
 	try{
 		if (id > 0)
-			mbMaster.ReadHold(id, addr, len, buffer);
+			mbMaster.ReadHold(id, addr, count, buffer);
 		else
 		{
 			/**
 			 * For device 0 data width is 1 byte and store at hight byte of buffer
 			 **/
-			mbMaster.ReadHoldDev0(id, addr, len, byteBuffer);
+			mbMaster.ReadHoldDev0(id, addr, count, byteBuffer);
 
-			for (int i = 0; i < len; i++)
+			for (int i = 0; i < count; i++)
 				buffer[i] = (byteBuffer[i] << 8);
 		}
 
@@ -233,4 +233,24 @@ LIBSPEC int GET(uint8_t id, uint16_t addr, uint16_t len, uint16_t* buffer)
 		_RPTF0(_CRT_WARN, "Timeout");
 		return MODBUS_MASTER_TIMEOUT_ERROR;
 	}
+}
+
+/**
+* Read 1 register
+* id		Slave ID
+* addr		Registers start address
+* value	Register value
+* Return:	MODBUS_MASTER_SUCCESS
+*			MODBUS_MASTER_TCP_ERROR
+*			MODBUS_MASTER_TIMEOUT_ERROR
+*			< 0 - Modbus exception with code by absolute value.
+**/
+LIBSPEC int GET(uint8_t id, uint16_t addr, uint16_t len, uint16_t& value)
+{
+	_RPTF0(_CRT_WARN, "GET()");
+	uint16_t data;
+	
+	int iResult = TCP_ReadHold(id, addr, 1, &data);
+	value = data;
+	return iResult;
 }

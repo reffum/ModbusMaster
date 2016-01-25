@@ -80,6 +80,16 @@ namespace Modbus
 		~Master();
 
 		/**
+		 * Modbus Write Single in dev0
+		 **/
+		void WriteSingleDev0(uint8_t id, uint16_t regAddr, uint8_t regData);
+
+		/**
+		 * Modbus Read Hold from device 0
+		 **/
+		void ReadHoldDev0(uint8_t id, uint16_t regStartAddr, uint16_t regsNum, uint8_t* regsValue);
+
+		/**
 		* Modbus request Read Hold.
 		**/
 		void ReadHold(uint8_t id, uint16_t regsStartAddr, uint16_t regsNumber, uint16_t* regsValue);

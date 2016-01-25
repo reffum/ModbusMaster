@@ -22,6 +22,27 @@ namespace Modbus
 		uint8_t code;
 	};
 
+	struct WriteSingleDev0RequestPdu
+	{
+		uint8_t func;
+		uint16_t addr;
+		uint8_t data;
+	};
+
+	struct ReadHoldDev0RequestPdu
+	{
+		uint8_t func;
+		uint16_t addr;
+		uint16_t count;
+	};
+
+	struct ReadHoldDev0ResponcePdu
+	{
+		uint8_t func;
+		uint8_t count;
+		uint8_t data[1];
+	};
+
 	struct ReadHoldRequestPdu
 	{
 		uint8_t func;
@@ -51,6 +72,8 @@ namespace Modbus
 	 **/
 	const uint8_t ReadHoldFuncCode = 3;
 	const uint8_t WriteSingleFuncCode = 6;
+	const uint8_t ReadHoldDev0FuncCode = 0x65;
+	const uint8_t WriteSingleDev0FuncCode = 0x64;
 
 	/**
 	 * Modbus PDU sizes.
@@ -67,6 +90,154 @@ namespace Modbus
 
 	Master::~Master()
 	{
+	}
+
+	/**
+	* Modbus Write Single in dev0
+	**/
+	void Master::WriteSingleDev0(uint8_t id, uint16_t regAddr, uint8_t regData)
+	{
+		_RPTF3(_CRT_WARN, "Master::WriteSingleDev0(%hhX, %hX, %hhX)", id, regAddr, regData);
+		
+		WriteSingleDev0RequestPdu reqPdu;
+		reqPdu.func = WriteSingleDev0FuncCode;
+		reqPdu.addr = _byteswap_ushort(regAddr);
+		reqPdu.data = regData;
+
+		vector<uint8_t> request((uint8_t*)&reqPdu, (uint8_t*)&reqPdu + sizeof(reqPdu));
+#ifdef _DEBUG
+		_RPTF0(_CRT_WARN, "Request PDU:");
+		for each (uint8_t ch in request)
+		{
+			_RPT1(_CRT_WARN, "%hhX ", ch);
+		}
+		_RPT0(_CRT_WARN, "\n");
+#endif
+		if (id == BroadcastID)
+		{
+			SendPdu(id, request);
+			return;
+		}
+
+		vector<uint8_t> responce = SendPduAndReceive(id, request);
+#ifdef _DEBUG
+		_RPTF0(_CRT_WARN, "Responce:");
+		for each (uint8_t ch in responce)
+		{
+			_RPT1(_CRT_WARN, " %hhX", ch);
+		}
+		_RPT0(_CRT_WARN, "\n");
+#endif
+
+		/**
+		* Check modbus exception.
+		**/
+		if ((responce[0] == (ReadHoldFuncCode | 0x80)) &&
+			(responce.size() == ExceptionPduSize))
+		{
+			ExceptionPdu *erp = (ExceptionPdu*)(responce.data());
+
+			_RPTF1(_CRT_WARN, "Exception code:%hX", erp->code);
+
+			throw ExceptionCode(erp->code);
+		}
+
+		/**
+		* Check PDU responce correction.
+		**/
+		if (request != responce)
+		{
+			throw InvalidResponcePdu(request, responce);
+		}
+
+		_RPTF0(_CRT_WARN, "Function complete");
+
+	}
+
+	/**
+	* Modbus Read Hold from device 0
+	**/
+	void Master::ReadHoldDev0(
+		uint8_t id,
+		uint16_t regStartAddr,
+		uint16_t regsNum,
+		uint8_t* regsValue
+		)
+	{
+		_RPTF4(_CRT_WARN, "Master::ReadHoldDev0(%hhu, %hX, %hX, %p)", id, regStartAddr, regsNum, regsValue);
+
+		assert(regsValue);
+		
+		if (id == BroadcastID)
+		{
+			throw std::logic_error("Broadcast ReadHold reques.");
+		}
+
+		ReadHoldDev0RequestPdu reqPdu;
+		reqPdu.func = ReadHoldDev0FuncCode;
+		reqPdu.addr = _byteswap_ushort(regStartAddr);
+		reqPdu.count = _byteswap_ushort(regsNum);
+
+		vector<uint8_t> request((uint8_t*)&reqPdu, (uint8_t*)&reqPdu + sizeof(reqPdu));
+#ifdef _DEBUG
+		_RPTF0(_CRT_WARN, "Request PDU:");
+		for each (uint8_t ch in request)
+		{
+			_RPT1(_CRT_WARN, "%hhX ", ch);
+		}
+		_RPT0(_CRT_WARN, "\n");
+#endif
+
+		vector<uint8_t> responce = SendPduAndReceive(id, request);
+
+#ifdef _DEBUG
+		_RPTF0(_CRT_WARN, "Responce PDU:");
+		for each (uint8_t ch in responce)
+		{
+			_RPT1(_CRT_WARN, "%hhX ", ch);
+		}
+		_RPT0(_CRT_WARN, "\n");
+#endif
+		/**
+		* Check modbus exception.
+		**/
+		if ((responce[0] == (ReadHoldFuncCode | 0x80)) &&
+			(responce.size() == ExceptionPduSize))
+		{
+			ExceptionPdu *erp = (ExceptionPdu*)(responce.data());
+
+			_RPTF1(_CRT_WARN, "Exception code:%hX", erp->code);
+
+			throw ExceptionCode(erp->code);
+		}
+
+		/**
+		* Check responce PDU correction
+		**/
+		const int expectedRespSize = 2 + regsNum;
+		if (expectedRespSize != responce.size())
+		{
+			_RPTF0(_CRT_WARN, "Responce PDU have incorrect format.");
+			throw InvalidResponcePdu(request, responce);
+		}
+
+		ReadHoldDev0ResponcePdu *respPdu = (ReadHoldDev0ResponcePdu *)responce.data();
+		if (respPdu->func != ReadHoldDev0FuncCode ||
+			respPdu->count != regsNum)
+		{
+			_RPTF0(_CRT_WARN, "Responce PDU have incorrect format.");
+			throw InvalidResponcePdu(request, responce);
+		}
+
+		/**
+		* Copy registers data
+		**/
+		for (int i = 0; i < regsNum; i++)
+		{
+			regsValue[i] = respPdu->data[i];
+		}
+
+		_RPTF0(_CRT_WARN, "Function complete");
 	}
 
 	void Master::ReadHold(
@@ -216,6 +387,7 @@ namespace Modbus
 		{
 			throw InvalidResponcePdu(request, responce);
 		}
+		_RPTF0(_CRT_WARN, "Function complete");
 	}
 
 }

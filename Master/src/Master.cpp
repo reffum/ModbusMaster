@@ -78,8 +78,7 @@ namespace Modbus
 	/**
 	 * Modbus PDU sizes.
 	 **/
-	const int ReadHoldMaxRegisters = 125;
-	const int ReadHoldMaxResponceSize = ReadHoldMaxRegisters * 2 + 2;
+
 	const int ExceptionPduSize = sizeof(ExceptionPdu);
 
 

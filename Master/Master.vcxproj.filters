@@ -27,9 +27,6 @@
     <ClInclude Include="src\Serial.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Exceptions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\Tcp.h">
       <Filter>Header Files</Filter>
     </ClInclude>

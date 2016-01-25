@@ -49,7 +49,7 @@ LIBSPEC int ModbusTCP_Close();
  *			MODBUS_MASTER_TIMEOUT_ERROR
  *			< 0 Modbus exception with code by absolute value.
  **/
-LIBSPEC int ModbusTCP_WriteSingle(uint8_t id, uint16_t addr, uint16_t value);
+LIBSPEC int PUT(uint8_t id, uint16_t addr, uint16_t value);
 
 /**
  * Read hold registers
@@ -62,6 +62,6 @@ LIBSPEC int ModbusTCP_WriteSingle(uint8_t id, uint16_t addr, uint16_t value);
  *			MODBUS_MASTER_TIMEOUT_ERROR
  *			< 0 - Modbus exception with code by absolute value.
  **/
-LIBSPEC int ModbusTCP_ReadHold(uint8_t id, uint16_t addr, uint16_t len, uint16_t* buffer);
+LIBSPEC int GET(uint8_t id, uint16_t addr, uint16_t len, uint16_t* buffer);
 
 #endif /* _MODBUS_MASTER_H_ */

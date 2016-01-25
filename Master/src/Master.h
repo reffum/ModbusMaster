@@ -55,11 +55,11 @@ namespace Modbus
 	{
 	public:
 		InvalidResponceFdu(std::vector<uint8_t> req, std::vector<uint8_t> resp)
-			:reqPdu(req), respPdu(resp){}
-		InvalidResponceFdu(std::vector<uint8_t> resp) :respPdu(resp){}
+			:reqFdu(req), respFdu(resp){}
+		InvalidResponceFdu(std::vector<uint8_t> resp) :respFdu(resp){}
 
-		std::vector<uint8_t> reqPdu;
-		std::vector<uint8_t> respPdu;
+		std::vector<uint8_t> reqFdu;
+		std::vector<uint8_t> respFdu;
 	};
 
 	class TimeoutException
@@ -75,6 +75,8 @@ namespace Modbus
 		 * Constants
 		 **/
 		const int BroadcastID = 255;
+		static const int ReadHoldMaxRegisters = 125;
+		static const int ReadHoldMaxResponceSize = ReadHoldMaxRegisters * 2 + 2;
 
 		Master();
 		~Master();

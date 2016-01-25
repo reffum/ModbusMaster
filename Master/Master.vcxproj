@@ -75,7 +75,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AsciiFdu.h" />
-    <ClInclude Include="src\Exceptions.h" />
     <ClInclude Include="src\Master.h" />
     <ClInclude Include="src\ModbusMasterAsciiTCP.h" />
     <ClInclude Include="src\Serial.h" />

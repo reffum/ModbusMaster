@@ -4,7 +4,6 @@
 * Email	reffum@bk.ru
 **/
 #include <crtdbg.h>
-#include "Exceptions.h"
 #include "Tcp.h"
 
 

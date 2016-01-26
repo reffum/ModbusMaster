@@ -27,7 +27,7 @@ namespace Modbus
 	**/
 	void Tcp::Connect(const char* ip, uint16_t port)
 	{
-		_RPTF2(_CRT_WARN, "Tcp::Connect(%s, %hu)", ip, port);
+		_RPTF2(_CRT_WARN, "Tcp::Connect(%s, %hu)\n", ip, port);
 
 		int iResult;
 		//
@@ -37,13 +37,13 @@ namespace Modbus
 		if (WSAStartup(MAKEWORD(2, 2), &wsaDate))
 		{
 			_RPTF0(_CRT_WARN, "WinSock initialization error\n");
-			throw ConnectException("WinSock initialization error");
+			throw ConnectException("WinSock initialization error\n");
 		}
 
 		sock = socket(AF_INET, SOCK_STREAM, 0);
 		if (sock == INVALID_SOCKET)
 		{
-			_RPTF0(_CRT_WARN, "Create socket error");
+			_RPTF0(_CRT_WARN, "Create socket error\n");
 			WSACleanup();
 			throw ConnectException("Create socket error.");
 		}
@@ -63,7 +63,7 @@ namespace Modbus
 
 		if (iResult == SOCKET_ERROR)
 		{
-			_RPTF1(_CRT_WARN, "connect() error with code:%X", WSAGetLastError());
+			_RPTF1(_CRT_WARN, "connect() error with code:%X\n", WSAGetLastError());
 
 			closesocket(sock);
 			WSACleanup();
@@ -77,7 +77,7 @@ namespace Modbus
 	**/
 	void Tcp::Disconnect()
 	{
-		_RPTF0(_CRT_WARN, "Tcp::Disconnect()");
+		_RPTF0(_CRT_WARN, "Tcp::Disconnect()\n");
 
 		shutdown(sock, SD_BOTH);
 		closesocket(sock);
@@ -89,7 +89,7 @@ namespace Modbus
 	**/
 	void Tcp::SendFdu(vector<uint8_t> fdu)
 	{
-		_RPTF0(_CRT_WARN, "Tcp::SendFdu()");
+		_RPTF0(_CRT_WARN, "Tcp::SendFdu()\n");
 
 		int iResult;
 		
@@ -106,7 +106,7 @@ namespace Modbus
 			iResult = send(sock, (const char*)fdu.data(), fdu.size(), 0);
 			if (iResult == SOCKET_ERROR)
 			{
-				_RPTF1(_CRT_WARN, "send() error with code:%X", WSAGetLastError());
+				_RPTF1(_CRT_WARN, "send() error with code:%X\n", WSAGetLastError());
 				throw SendException("Send exception.");
 			}
 
@@ -121,7 +121,7 @@ namespace Modbus
 	**/
 	uint8_t Tcp::ReceiveOneFduSymbol(milliseconds timeout)
 	{
-		_RPTF1(_CRT_WARN, "Tcp::ReceiveOneFduSymbol(%d)", timeout.count());
+		_RPTF1(_CRT_WARN, "Tcp::ReceiveOneFduSymbol(%d)\n", timeout.count());
 
 		fd_set read_fd_set;
 		TIMEVAL tm;
@@ -138,17 +138,17 @@ namespace Modbus
 
 		int iResult = select(0, &read_fd_set, NULL, NULL, &tm);
 
-		_RPTF1(_CRT_WARN, "Wait complete with result: %d", iResult);
+		_RPTF1(_CRT_WARN, "Wait complete with result: %d\n", iResult);
 
 		if (iResult == SOCKET_ERROR)
 		{
-			_RPTF1(_CRT_WARN, "select() error with code %X", WSAGetLastError());
+			_RPTF1(_CRT_WARN, "select() error with code %X\n", WSAGetLastError());
 			throw ReceiveException("Receive exception.");
 		}
 
 		if (iResult == 0)
 		{
-			_RPTF0(_CRT_WARN, "Timeout");
+			_RPTF0(_CRT_WARN, "Timeout\n");
 			throw TimeoutException();
 		}
 
@@ -156,10 +156,10 @@ namespace Modbus
 		if (iResult == SOCKET_ERROR)
 		{
 			_RPTF1(_CRT_WARN, "recv() error with code %X", WSAGetLastError());
-			throw ReceiveException("Receive exception.");
+			throw ReceiveException("Receive exception.\n");
 		}
 
-		_RPTF1(_CRT_WARN, "Receive: %hhX", ch);
+		_RPTF1(_CRT_WARN, "Receive: %hhX\n", ch);
 		return ch;
 
 	}

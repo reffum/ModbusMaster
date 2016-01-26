@@ -34,7 +34,7 @@ namespace Modbus
 	**/
 	void AsciiFdu::SendPdu(uint8_t id, vector<uint8_t> requestPdu)
 	{
-		_RPTF0(_CRT_WARN, "Ascii::SendFdu()");
+		_RPTF0(_CRT_WARN, "Ascii::SendFdu()\n");
 
 		vector<uint8_t> fdu = getFdu(id, requestPdu);
 #ifdef _DEBUG
@@ -53,7 +53,7 @@ namespace Modbus
 	**/
 	vector<uint8_t> AsciiFdu::SendPduAndReceive(uint8_t id, vector<uint8_t> requestPdu)
 	{
-		_RPTF0(_CRT_WARN, "Ascii::SendFdu()");
+		_RPTF0(_CRT_WARN, "Ascii::SendFdu()\n");
 
 		assert(id != BroadcastID);
 
@@ -95,7 +95,7 @@ namespace Modbus
 		 **/
 		if ((respFdu.size() % 2) == 1)
 		{
-			_RPTF0(_CRT_WARN, "Invalid responce FDU");
+			_RPTF0(_CRT_WARN, "Invalid responce FDU\n");
 			throw InvalidResponceFdu(reqFdu, respFdu);
 		}
 
@@ -121,7 +121,7 @@ namespace Modbus
 		if ((respPdu[0] != id)		||
 			(lrc != getLrc(respPdu)	))
 		{
-			_RPTF0(_CRT_WARN, "Invalid responce FDU");
+			_RPTF0(_CRT_WARN, "Invalid responce FDU\n");
 			throw InvalidResponcePdu(requestPdu, respPdu);
 		}
 
@@ -135,7 +135,7 @@ namespace Modbus
 
 	vector<uint8_t> AsciiFdu::receiveAsciiResponceFdu()
 	{
-		_RPTF0(_CRT_WARN, "AsciiFdu::receiveAsciiResponceFdu()");
+		_RPTF0(_CRT_WARN, "AsciiFdu::receiveAsciiResponceFdu()\n");
 
 		/** 
 		 * Timeout time moment 
@@ -178,7 +178,7 @@ namespace Modbus
 
 			if (timeout <= milliseconds::zero())
 			{
-				_RPTF0(_CRT_WARN, "Timeout");
+				_RPTF0(_CRT_WARN, "Timeout\n");
 				throw TimeoutException();
 			}
 
@@ -194,7 +194,7 @@ namespace Modbus
 
 		} while ( !(fdu.size() > 3 && *(fdu.cend() - 1) == '\n' && *(fdu.cend() - 2) == '\r'));
 
-		_RPTF0(_CRT_WARN, "FDU receive complete.");
+		_RPTF0(_CRT_WARN, "FDU receive complete.\n");
 
 		return fdu;
 	}

@@ -24,14 +24,14 @@ static ModbusMasterAsciiTCP mbMaster;
 **/
 LIBSPEC int ModbusTCP_Open(const char* ip, int port)
 {
-	_RPTF2(_CRT_WARN, "ModbusTCP_Open(%s, %d)", ip, port);
+	_RPTF2(_CRT_WARN, "ModbusTCP_Open(%s, %d)\n", ip, port);
 	try
 	{
 		mbMaster.Connect(ip, port);
 	}
 	catch (ConnectException e)
 	{
-		_RPTF3(_CRT_WARN, "ModbusTCP_Open(%s, %hu) error with message:%s", ip, port, e.what());
+		_RPTF3(_CRT_WARN, "ModbusTCP_Open(%s, %hu) error with message:%s\n", ip, port, e.what());
 		return MODBUS_MASTER_TCP_ERROR;
 	}
 
@@ -44,7 +44,7 @@ LIBSPEC int ModbusTCP_Open(const char* ip, int port)
 **/
 LIBSPEC int ModbusTCP_Close()
 {
-	_RPTF0(_CRT_WARN, "ModbusTCP_Close()");
+	_RPTF0(_CRT_WARN, "ModbusTCP_Close()\n");
 
 	mbMaster.Disconnect();
 	return MODBUS_MASTER_SUCCESS;
@@ -62,7 +62,7 @@ LIBSPEC int ModbusTCP_Close()
 **/
 LIBSPEC int PUT(uint8_t id, uint16_t addr, uint16_t value)
 {
-	_RPTF3(_CRT_WARN, "PUT(%hhd, %hX, %hX)", id, addr, value);
+	_RPTF3(_CRT_WARN, "PUT(%hhd, %hX, %hX)\n", id, addr, value);
 
 	try
 	{
@@ -71,27 +71,27 @@ LIBSPEC int PUT(uint8_t id, uint16_t addr, uint16_t value)
 		else
 			mbMaster.WriteSingle(id, addr, value);
 
-		_RPTF0(_CRT_WARN, "Function complete");
+		_RPTF0(_CRT_WARN, "Function complete\n");
 		return MODBUS_MASTER_SUCCESS;
 	}
 	catch (ExceptionCode e)
 	{
-		_RPTF1(_CRT_WARN, "Exception code: %X", e.code);
+		_RPTF1(_CRT_WARN, "Exception code: %X\n", e.code);
 		return -(e.code);
 	}
 	catch (SendException e)
 	{
-		_RPTF1(_CRT_WARN, "Send exception: %s", e.what());
+		_RPTF1(_CRT_WARN, "Send exception: %s\n", e.what());
 		return MODBUS_MASTER_TCP_ERROR;
 	}
 	catch (ReceiveException e)
 	{
-		_RPTF1(_CRT_WARN, "Receive exception: %s", e.what());
+		_RPTF1(_CRT_WARN, "Receive exception: %s\n", e.what());
 		return MODBUS_MASTER_TCP_ERROR;
 	}
 	catch (InvalidResponcePdu e)
 	{
-		_RPTF0(_CRT_WARN, "Invalid responce PDU");
+		_RPTF0(_CRT_WARN, "Invalid responce PDU\n");
 #ifdef _DEBUG
 		_RPT0(_CRT_WARN, "Request PDU: ");
 		for each (uint8_t b in e.reqPdu)
@@ -111,7 +111,7 @@ LIBSPEC int PUT(uint8_t id, uint16_t addr, uint16_t value)
 	}
 	catch (InvalidResponceFdu e)
 	{
-		_RPTF0(_CRT_WARN, "Invalid responce FDU");
+		_RPTF0(_CRT_WARN, "Invalid responce FDU\n");
 #ifdef _DEBUG
 		_RPT0(_CRT_WARN, "Request FDU: ");
 		for each (uint8_t b in e.reqFdu)
@@ -131,7 +131,7 @@ LIBSPEC int PUT(uint8_t id, uint16_t addr, uint16_t value)
 	}
 	catch (TimeoutException)
 	{
-		_RPTF0(_CRT_WARN, "Timeout");
+		_RPTF0(_CRT_WARN, "Timeout\n");
 		return MODBUS_MASTER_TIMEOUT_ERROR;
 	}
 }
@@ -151,7 +151,7 @@ LIBSPEC int TCP_ReadHold(uint8_t id, uint16_t addr, uint16_t count, uint16_t* bu
 {
 	static uint8_t byteBuffer[Master::ReadHoldMaxRegisters];
 
-	_RPTF4(_CRT_WARN, "TCP_ReadHold(%hhu, %hX, %hX, %p)", id, addr, count, buffer);
+	_RPTF4(_CRT_WARN, "TCP_ReadHold(%hhu, %hX, %hX, %p)\n", id, addr, count, buffer);
 	assert(buffer);
 
 	if (count > Master::ReadHoldMaxRegisters)
@@ -173,28 +173,28 @@ LIBSPEC int TCP_ReadHold(uint8_t id, uint16_t addr, uint16_t count, uint16_t* bu
 				buffer[i] = (byteBuffer[i] << 8);
 		}
 
-		_RPTF0(_CRT_WARN, "Function complete");
+		_RPTF0(_CRT_WARN, "Function complete\n");
 
 		return MODBUS_MASTER_SUCCESS;
 	}
 	catch (ExceptionCode e)
 	{
-		_RPTF1(_CRT_WARN, "Exception code: %X", e.code);
+		_RPTF1(_CRT_WARN, "Exception code: %X\n", e.code);
 		return -(e.code);
 	}
 	catch (SendException e)
 	{
-		_RPTF1(_CRT_WARN, "Send exception: %s", e.what());
+		_RPTF1(_CRT_WARN, "Send exception: %s\n", e.what());
 		return MODBUS_MASTER_TCP_ERROR;
 	}
 	catch (ReceiveException e)
 	{
-		_RPTF1(_CRT_WARN, "Receive exception: %s", e.what());
+		_RPTF1(_CRT_WARN, "Receive exception: %s\n", e.what());
 		return MODBUS_MASTER_TCP_ERROR;
 	}
 	catch (InvalidResponcePdu e)
 	{
-		_RPTF0(_CRT_WARN, "Invalid responce PDU");
+		_RPTF0(_CRT_WARN, "Invalid responce PDU\n");
 #ifdef _DEBUG
 		_RPT0(_CRT_WARN, "Request PDU: ");
 		for each (uint8_t b in e.reqPdu)
@@ -214,7 +214,7 @@ LIBSPEC int TCP_ReadHold(uint8_t id, uint16_t addr, uint16_t count, uint16_t* bu
 	}
 	catch (InvalidResponceFdu e)
 	{
-		_RPTF0(_CRT_WARN, "Invalid responce FDU");
+		_RPTF0(_CRT_WARN, "Invalid responce FDU\n");
 #ifdef _DEBUG
 		_RPT0(_CRT_WARN, "Request FDU: ");
 		for each (uint8_t b in e.reqFdu)
@@ -234,7 +234,7 @@ LIBSPEC int TCP_ReadHold(uint8_t id, uint16_t addr, uint16_t count, uint16_t* bu
 	}
 	catch (TimeoutException)
 	{
-		_RPTF0(_CRT_WARN, "Timeout");
+		_RPTF0(_CRT_WARN, "Timeout\n");
 		return MODBUS_MASTER_TIMEOUT_ERROR;
 	}
 }
@@ -251,7 +251,7 @@ LIBSPEC int TCP_ReadHold(uint8_t id, uint16_t addr, uint16_t count, uint16_t* bu
 **/
 LIBSPEC int GET(uint8_t id, uint16_t addr, uint16_t& value)
 {
-	_RPTF0(_CRT_WARN, "GET()");
+	_RPTF0(_CRT_WARN, "GET()\n");
 	uint16_t data;
 	
 	int iResult = TCP_ReadHold(id, addr, 1, &data);

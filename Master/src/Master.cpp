@@ -97,7 +97,7 @@ namespace Modbus
 	**/
 	void Master::WriteSingleDev0(uint8_t id, uint16_t regAddr, uint8_t regData)
 	{
-		_RPTF3(_CRT_WARN, "Master::WriteSingleDev0(%hhX, %hX, %hhX)", id, regAddr, regData);
+		_RPTF3(_CRT_WARN, "Master::WriteSingleDev0(%hhX, %hX, %hhX)\n", id, regAddr, regData);
 		
 		WriteSingleDev0RequestPdu reqPdu;
 		reqPdu.func = WriteSingleDev0FuncCode;
@@ -137,7 +137,7 @@ namespace Modbus
 		{
 			ExceptionPdu *erp = (ExceptionPdu*)(responce.data());
 
-			_RPTF1(_CRT_WARN, "Exception code:%hX", erp->code);
+			_RPTF1(_CRT_WARN, "Exception code:%hX\n", erp->code);
 
 			throw ExceptionCode(erp->code);
 		}
@@ -150,7 +150,7 @@ namespace Modbus
 			throw InvalidResponcePdu(request, responce);
 		}
 
-		_RPTF0(_CRT_WARN, "Function complete");
+		_RPTF0(_CRT_WARN, "Function complete\n");
 
 	}
 
@@ -164,13 +164,13 @@ namespace Modbus
 		uint8_t* regsValue
 		)
 	{
-		_RPTF4(_CRT_WARN, "Master::ReadHoldDev0(%hhu, %hX, %hhX, %p)", id, regStartAddr, regsNum, regsValue);
+		_RPTF4(_CRT_WARN, "Master::ReadHoldDev0(%hhu, %hX, %hhX, %p)\n", id, regStartAddr, regsNum, regsValue);
 
 		assert(regsValue);
 		
 		if (id == BroadcastID)
 		{
-			throw std::logic_error("Broadcast ReadHold reques.");
+			throw std::logic_error("Broadcast ReadHold reques.\n");
 		}
 
 		ReadHoldDev0RequestPdu reqPdu;
@@ -206,7 +206,7 @@ namespace Modbus
 		{
 			ExceptionPdu *erp = (ExceptionPdu*)(responce.data());
 
-			_RPTF1(_CRT_WARN, "Exception code:%hX", erp->code);
+			_RPTF1(_CRT_WARN, "Exception code:%hX\n", erp->code);
 
 			throw ExceptionCode(erp->code);
 		}
@@ -217,7 +217,7 @@ namespace Modbus
 		const int expectedRespSize = 2 + regsNum;
 		if (expectedRespSize != responce.size())
 		{
-			_RPTF0(_CRT_WARN, "Responce PDU have incorrect format.");
+			_RPTF0(_CRT_WARN, "Responce PDU have incorrect format.\n");
 			throw InvalidResponcePdu(request, responce);
 		}
 
@@ -225,7 +225,7 @@ namespace Modbus
 		if (respPdu->func != ReadHoldDev0FuncCode ||
 			respPdu->count != regsNum)
 		{
-			_RPTF0(_CRT_WARN, "Responce PDU have incorrect format.");
+			_RPTF0(_CRT_WARN, "Responce PDU have incorrect format.\n");
 			throw InvalidResponcePdu(request, responce);
 		}
 
@@ -237,7 +237,7 @@ namespace Modbus
 			regsValue[i] = respPdu->data[i];
 		}
 
-		_RPTF0(_CRT_WARN, "Function complete");
+		_RPTF0(_CRT_WARN, "Function complete\n");
 	}
 
 	void Master::ReadHold(
@@ -254,7 +254,7 @@ namespace Modbus
 		
 		if (id == BroadcastID)
 		{
-			throw std::logic_error("Broadcast ReadHold reques.");
+			throw std::logic_error("Broadcast ReadHold reques.\n");
 		}
 
 		ReadHoldRequestPdu reqPdu;
@@ -293,7 +293,7 @@ namespace Modbus
 		{
 			ExceptionPdu *erp = (ExceptionPdu*)(responce.data());
 
-			_RPTF1(_CRT_WARN, "Exception code:%hX", erp->code);
+			_RPTF1(_CRT_WARN, "Exception code:%hX\n", erp->code);
 
 			throw ExceptionCode(erp->code);
 		}
@@ -304,7 +304,7 @@ namespace Modbus
 		const int expectedRespSize = 2 + regsNumber * 2;
 		if (expectedRespSize != responce.size())
 		{
-			_RPTF0(_CRT_WARN, "Responce PDU have incorrect format.");
+			_RPTF0(_CRT_WARN, "Responce PDU have incorrect format.\n");
 			throw InvalidResponcePdu(request, responce);
 		}
 
@@ -313,7 +313,7 @@ namespace Modbus
 		if ((respPdu->func != ReadHoldFuncCode)	||
 			(respPdu->count != regsNumber*2))
 		{
-			_RPTF0(_CRT_WARN, "Responce PDU have incorrect format.");
+			_RPTF0(_CRT_WARN, "Responce PDU have incorrect format.\n");
 			throw InvalidResponcePdu(request, responce);
 		}
 
@@ -333,7 +333,7 @@ namespace Modbus
 	{
 		WriteSinglePdu reqPdu;
 
-		_RPTF3(_CRT_WARN, "Master::WriteSingle(%hhu, %hu, %hu)", id, regAddr, regValue);
+		_RPTF3(_CRT_WARN, "Master::WriteSingle(%hhu, %hu, %hu)\n", id, regAddr, regValue);
 
 		reqPdu.func = WriteSingleFuncCode;
 		reqPdu.addr = _byteswap_ushort(regAddr);
@@ -375,7 +375,7 @@ namespace Modbus
 		{
 			ExceptionPdu *ep = (ExceptionPdu*)(responce.data());
 
-			_RPTF1(_CRT_WARN, "Exception code: %hX", ep->code);
+			_RPTF1(_CRT_WARN, "Exception code: %hX\n", ep->code);
 
 			throw ExceptionCode(ep->code);
 		}
@@ -385,10 +385,10 @@ namespace Modbus
 		 **/
 		if (request != responce)
 		{
-			_RPT0(_CRT_WARN, "Invalid responce PDU");
+			_RPT0(_CRT_WARN, "Invalid responce PDU\n");
 			throw InvalidResponcePdu(request, responce);
 		}
-		_RPTF0(_CRT_WARN, "Function complete");
+		_RPTF0(_CRT_WARN, "Function complete\n");
 	}
 
 }

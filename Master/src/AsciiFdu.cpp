@@ -88,13 +88,14 @@ namespace Modbus
 		 * Skip SOF and EOF symbols
 		 **/
 		respFdu.erase(respFdu.cbegin());
-		respFdu.erase(respFdu.cend() - 1, respFdu.cend());
+		respFdu.erase(respFdu.cend() - 2, respFdu.cend());
 
 		/**
 		 * Check FDU correction.
 		 **/
 		if ((respFdu.size() % 2) == 1)
 		{
+			_RPTF0(_CRT_WARN, "Invalid responce FDU");
 			throw InvalidResponceFdu(reqFdu, respFdu);
 		}
 
@@ -114,19 +115,20 @@ namespace Modbus
 		/**
 		 * Check ID and LRC.
 		 **/
-		uint8_t lrc = respFdu.back();
-		respFdu.pop_back();
+		uint8_t lrc = respPdu.back();
+		respPdu.pop_back();
 
 		if ((respPdu[0] != id)		||
 			(lrc != getLrc(respPdu)	))
 		{
+			_RPTF0(_CRT_WARN, "Invalid responce FDU");
 			throw InvalidResponcePdu(requestPdu, respPdu);
 		}
 
 		/**
 		 * Remove ID
 		 **/
-		respPdu.erase(respFdu.cbegin());
+		respPdu.erase(respPdu.cbegin());
 
 		return respPdu;
 	}
@@ -181,15 +183,16 @@ namespace Modbus
 			}
 
 			symbol = ReceiveOneFduSymbol(timeout);
+			fdu.push_back(symbol);
+
 			_RPT1(_CRT_WARN, " %hhX", symbol);
 
 			if (!isAscii(symbol))
 			{
-				fdu.push_back(symbol);
 				throw InvalidResponceFdu(fdu);
 			}
 
-		} while (fdu.size() > 3 && *(fdu.cend()) == '\n' && *(fdu.cend() - 1) == '\r');
+		} while ( !(fdu.size() > 3 && *(fdu.cend() - 1) == '\n' && *(fdu.cend() - 2) == '\r'));
 
 		_RPTF0(_CRT_WARN, "FDU receive complete.");
 
@@ -241,7 +244,7 @@ namespace Modbus
 
 	uint8_t AsciiFdu::byte2ascii(const uint8_t byte)
 	{
-		assert(byte < 0xf);
+		assert(byte <= 0xf);
 
 		return (byte < 10) ?
 			byte + 0x30 :
@@ -296,7 +299,7 @@ namespace Modbus
 
 		for (auto it = fdu.begin(); it != fdu.cend(); it += 2)
 		{
-			pdu.push_back(ascii2byte(*it, *(it + 1)));
+			pdu.push_back(ascii2byte(*(it+1), *it));
 		}
 
 		return pdu;

@@ -137,13 +137,16 @@ namespace Modbus
 		tm.tv_usec = (long)micro.count();
 
 		int iResult = select(0, &read_fd_set, NULL, NULL, &tm);
+
+		_RPTF1(_CRT_WARN, "Wait complete with result: %d", iResult);
+
 		if (iResult == SOCKET_ERROR)
 		{
 			_RPTF1(_CRT_WARN, "select() error with code %X", WSAGetLastError());
 			throw ReceiveException("Receive exception.");
 		}
 
-		if (iResult = 0)
+		if (iResult == 0)
 		{
 			_RPTF0(_CRT_WARN, "Timeout");
 			throw TimeoutException();

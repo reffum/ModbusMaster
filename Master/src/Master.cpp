@@ -32,8 +32,8 @@ namespace Modbus
 	struct ReadHoldDev0RequestPdu
 	{
 		uint8_t func;
+		uint8_t count;
 		uint16_t addr;
-		uint16_t count;
 	};
 
 	struct ReadHoldDev0ResponcePdu
@@ -74,6 +74,7 @@ namespace Modbus
 	const uint8_t WriteSingleFuncCode = 6;
 	const uint8_t ReadHoldDev0FuncCode = 0x65;
 	const uint8_t WriteSingleDev0FuncCode = 0x64;
+	const uint8_t ExceptionFlag = 0x80;
 
 	/**
 	 * Modbus PDU sizes.
@@ -159,11 +160,11 @@ namespace Modbus
 	void Master::ReadHoldDev0(
 		uint8_t id,
 		uint16_t regStartAddr,
-		uint16_t regsNum,
+		uint8_t regsNum,
 		uint8_t* regsValue
 		)
 	{
-		_RPTF4(_CRT_WARN, "Master::ReadHoldDev0(%hhu, %hX, %hX, %p)", id, regStartAddr, regsNum, regsValue);
+		_RPTF4(_CRT_WARN, "Master::ReadHoldDev0(%hhu, %hX, %hhX, %p)", id, regStartAddr, regsNum, regsValue);
 
 		assert(regsValue);
 		
@@ -174,8 +175,8 @@ namespace Modbus
 
 		ReadHoldDev0RequestPdu reqPdu;
 		reqPdu.func = ReadHoldDev0FuncCode;
+		reqPdu.count = regsNum;
 		reqPdu.addr = _byteswap_ushort(regStartAddr);
-		reqPdu.count = _byteswap_ushort(regsNum);
 
 		vector<uint8_t> request((uint8_t*)&reqPdu, (uint8_t*)&reqPdu + sizeof(reqPdu));
 #ifdef _DEBUG
@@ -287,7 +288,7 @@ namespace Modbus
 		/**
 		 * Check modbus exception.
 		 **/
-		if ((responce[0] == (ReadHoldFuncCode | 0x80)) &&
+		if ((responce[0] & ExceptionFlag)		&&
 			(responce.size() == ExceptionPduSize))
 		{
 			ExceptionPdu *erp = (ExceptionPdu*)(responce.data());
@@ -370,7 +371,7 @@ namespace Modbus
 		 * Check modbus exception
 		 **/
 		if ((responce.size() == ExceptionPduSize) && 
-			(responce[0] == (WriteSingleFuncCode | 0x80)))
+			(responce[0] & ExceptionFlag))
 		{
 			ExceptionPdu *ep = (ExceptionPdu*)(responce.data());
 
@@ -384,6 +385,7 @@ namespace Modbus
 		 **/
 		if (request != responce)
 		{
+			_RPT0(_CRT_WARN, "Invalid responce PDU");
 			throw InvalidResponcePdu(request, responce);
 		}
 		_RPTF0(_CRT_WARN, "Function complete");

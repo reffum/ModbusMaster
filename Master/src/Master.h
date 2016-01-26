@@ -89,7 +89,7 @@ namespace Modbus
 		/**
 		 * Modbus Read Hold from device 0
 		 **/
-		void ReadHoldDev0(uint8_t id, uint16_t regStartAddr, uint16_t regsNum, uint8_t* regsValue);
+		void ReadHoldDev0(uint8_t id, uint16_t regStartAddr, uint8_t regsNum, uint8_t* regsValue);
 
 		/**
 		* Modbus request Read Hold.

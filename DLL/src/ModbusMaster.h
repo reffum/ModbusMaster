@@ -22,6 +22,7 @@
 #define MODBUS_MASTER_TCP_ERROR			2
 #define MODBUS_MASTER_TIMEOUT_ERROR		3
 #define MODBUS_MASTER_RESPONCE_ERROR	4
+#define MODBUS_MASTER_INVALID_ARGUMENT	5
 
 
 /**
@@ -61,7 +62,7 @@ LIBSPEC int PUT(uint8_t id, uint16_t addr, uint16_t value);
  *			MODBUS_MASTER_TIMEOUT_ERROR
  *			< 0 - Modbus exception with code by absolute value.
  **/
-LIBSPEC int GET(uint8_t id, uint16_t addr, uint16_t len, uint16_t& value);
+LIBSPEC int GET(uint8_t id, uint16_t addr, uint16_t& value);
 
 /**
 * Read hold registers

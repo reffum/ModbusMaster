@@ -18,7 +18,7 @@ namespace Modbus
 	/**
 	 * Constants
 	 **/
-	const seconds AsciiStandartTimeout(1);
+	const seconds AsciiStandartTimeout(5);
 
 	AsciiFdu::AsciiFdu()
 	{
@@ -176,9 +176,10 @@ namespace Modbus
 		{
 			timeout = duration_cast<milliseconds>(timeoutTime - high_resolution_clock::now());
 
+			_RPTF1(_CRT_WARN, "Timeout:%ld", timeout.count());
+
 			if (timeout <= milliseconds::zero())
 			{
-				_RPTF0(_CRT_WARN, "Timeout\n");
 				throw TimeoutException();
 			}
 

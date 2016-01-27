@@ -28,7 +28,19 @@ namespace Modbus
 		**/
 		void SendPdu(uint8_t id, std::vector<uint8_t> requestPdu);
 
+		void SetTimeout(std::chrono::milliseconds t);
+		std::chrono::milliseconds GetTimeout();
+
 	private:
+		/**
+		 * Variables
+		 **/
+		std::chrono::milliseconds Timeout;			/* Timeout*/
+
+
+		/**
+		 * Methods
+		 **/
 		std::vector<uint8_t> receiveAsciiResponceFdu();
 
 		/**

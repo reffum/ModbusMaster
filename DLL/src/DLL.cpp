@@ -10,6 +10,12 @@
 using namespace Modbus;
 
 /*************************************************************************
+* Constants
+************************************************************************/
+const int MaxTimeoutMs = 10000;
+const int MinTimeoutMs = 100;
+
+/*************************************************************************
  * Private variables 
  ************************************************************************/
 static ModbusMasterAsciiTCP mbMaster;
@@ -257,4 +263,31 @@ LIBSPEC int GET(uint8_t id, uint16_t addr, uint16_t& value)
 	int iResult = TCP_ReadHold(id, addr, 1, &data);
 	value = data;
 	return iResult;
+}
+
+/**
+* Set Modbus timeout
+* Timeout	timeout in ms(100ms..10s)
+* Return:  MODBUS_MASTER_SUCCESS
+*			MODBUS_MASTER_INVALID_ARGUMENT
+**/
+LIBSPEC int TCP_SetTimeout(unsigned timeout)
+{
+	_RPTF1(_CRT_WARN, "TCP_SetTimeout(&d)\n", timeout);
+
+	if (timeout > MaxTimeoutMs ||
+		timeout < MinTimeoutMs)
+		return MODBUS_MASTER_INVALID_ARGUMENT;
+
+	mbMaster.SetTimeout(std::chrono::milliseconds(timeout));
+	return MODBUS_MASTER_SUCCESS;
+}
+
+/**
+* Get current Modbus timeout
+* Returen:	timeout in ms
+**/
+LIBSPEC unsigned TCP_GetTimeout(void)
+{
+	return (unsigned)mbMaster.GetTimeout().count();
 }

@@ -15,12 +15,7 @@ namespace Modbus
 	using namespace std;
 	using namespace std::chrono;
 
-	/**
-	 * Constants
-	 **/
-	const seconds AsciiStandartTimeout(5);
-
-	AsciiFdu::AsciiFdu()
+	AsciiFdu::AsciiFdu() :Timeout(5000)
 	{
 	}
 
@@ -133,6 +128,21 @@ namespace Modbus
 		return respPdu;
 	}
 
+	/**
+	 * Private methods
+	 **/
+
+	void AsciiFdu::SetTimeout(std::chrono::milliseconds t)
+	{
+		Timeout = t;
+		_RPTF1(_CRT_WARN, "AsciiRdu::SetTimeiot(%ld)\n", t.count());
+	}
+
+	milliseconds AsciiFdu::GetTimeout()
+	{
+		return Timeout;
+	}
+
 	vector<uint8_t> AsciiFdu::receiveAsciiResponceFdu()
 	{
 		_RPTF0(_CRT_WARN, "AsciiFdu::receiveAsciiResponceFdu()\n");
@@ -140,8 +150,8 @@ namespace Modbus
 		/** 
 		 * Timeout time moment 
 		 **/
-		auto timeoutTime = high_resolution_clock::now() + AsciiStandartTimeout;
-		milliseconds timeout = AsciiStandartTimeout;
+		auto timeoutTime = high_resolution_clock::now() + Timeout;
+		milliseconds timeout = Timeout;
 		vector<uint8_t> fdu;
 		uint8_t symbol;
 

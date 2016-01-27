@@ -77,4 +77,18 @@ LIBSPEC int GET(uint8_t id, uint16_t addr, uint16_t& value);
 **/
 LIBSPEC int TCP_ReadHold(uint8_t id, uint16_t addr, uint16_t count, uint16_t* buffer);
 
+/**
+ * Set Modbus timeout
+ * Timeout	timeout in ms(100ms..10s)
+ * Return:  MODBUS_MASTER_SUCCESS
+ *			MODBUS_MASTER_INVALID_ARGUMENT
+ **/
+LIBSPEC int TCP_SetTimeout(unsigned timeout);
+
+/**
+ * Get current Modbus timeout
+ * Returen:	timeout in ms
+ **/
+LIBSPEC unsigned TCP_GetTimeout(void);
+
 #endif /* _MODBUS_MASTER_H_ */

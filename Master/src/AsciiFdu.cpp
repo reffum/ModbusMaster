@@ -154,7 +154,7 @@ namespace Modbus
 		{
 			timeout = duration_cast<milliseconds>(timeoutTime - high_resolution_clock::now());
 
-			_RPTF1(_CRT_WARN, "Timeout:%ld", timeout.count());
+			_RPTF1(_CRT_WARN, "Timeout:%ld\n", timeout.count());
 
 			if (timeout <= milliseconds::zero())
 			{
@@ -176,7 +176,7 @@ namespace Modbus
 		{
 			timeout = duration_cast<milliseconds>(timeoutTime - high_resolution_clock::now());
 
-			_RPTF1(_CRT_WARN, "Timeout:%ld", timeout.count());
+			_RPTF1(_CRT_WARN, "Timeout:%ld\n", timeout.count());
 
 			if (timeout <= milliseconds::zero())
 			{

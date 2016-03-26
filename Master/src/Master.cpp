@@ -4,391 +4,90 @@
 * E-mail	reffum@bk.ru
 **/
 #include <cassert>
-#include <cstdlib>
+#include <stdexcept>
 #include "Master.h"
+#include "mb_exceptions.h"
+
+using namespace std;
 
 namespace Modbus
 {
-	using namespace std;
-	/**
-	 * Modbus PDU structures.
-	 **/
-#ifdef _MSC_VER
-#pragma pack(1)
-#endif
-	struct ExceptionPdu
+	static uint8_t high_byte(uint16_t word)
 	{
-		uint8_t func;
-		uint8_t code;
-	};
-
-	struct WriteSingleDev0RequestPdu
-	{
-		uint8_t func;
-		uint16_t addr;
-		uint8_t data;
-	};
-
-	struct ReadHoldDev0RequestPdu
-	{
-		uint8_t func;
-		uint8_t count;
-		uint16_t addr;
-	};
-
-	struct ReadHoldDev0ResponcePdu
-	{
-		uint8_t func;
-		uint8_t count;
-		uint8_t data[1];
-	};
-
-	struct ReadHoldRequestPdu
-	{
-		uint8_t func;
-		uint16_t addr;
-		uint16_t count;
-	};
-
-	struct ReadHoldResponcePdu
-	{
-		uint8_t func;
-		uint8_t count;
-		uint16_t data[1];
-	};
-
-	struct WriteSinglePdu
-	{
-		uint8_t func;
-		uint16_t addr;
-		uint16_t value;
-	};
-
-#ifdef _MSC_VER
-#pragma pack()
-#endif
-	/**
-	 * Modbus function codes.
-	 **/
-	const uint8_t ReadHoldFuncCode = 3;
-	const uint8_t WriteSingleFuncCode = 6;
-	const uint8_t ReadHoldDev0FuncCode = 0x65;
-	const uint8_t WriteSingleDev0FuncCode = 0x64;
-	const uint8_t ExceptionFlag = 0x80;
-
-	/**
-	 * Modbus PDU sizes.
-	 **/
-
-	const int ExceptionPduSize = sizeof(ExceptionPdu);
-
-
-	Master::Master()
-	{
+		return (uint8_t)(word >> 8);
 	}
 
-
-	Master::~Master()
+	static uint8_t low_byte(uint16_t word)
 	{
+		return (uint8_t)(word & 0x00FF);
 	}
 
 	/**
-	* Modbus Write Single in dev0
+	* Read Coils(01)
+	* addr:			Starting address
+	* quantity:		Quantity of colils(1-2000)
+	* Return:		bit vector with coils status.
+	* Exceptions:	invalid_argument if quantity is out of range 1-2000.
 	**/
-	void Master::WriteSingleDev0(uint8_t id, uint16_t regAddr, uint8_t regData)
+	vector<bool> Master::ReadCoils(uint8_t id, uint16_t addr, unsigned quantity)
 	{
-		_RPTF3(_CRT_WARN, "Master::WriteSingleDev0(%hhX, %hX, %hhX)\n", id, regAddr, regData);
-		
-		WriteSingleDev0RequestPdu reqPdu;
-		reqPdu.func = WriteSingleDev0FuncCode;
-		reqPdu.addr = _byteswap_ushort(regAddr);
-		reqPdu.data = regData;
+		vector<uint8_t> request, responce;
 
-		vector<uint8_t> request((uint8_t*)&reqPdu, (uint8_t*)&reqPdu + sizeof(reqPdu));
-#ifdef _DEBUG
-		_RPTF0(_CRT_WARN, "Request PDU:");
-		for each (uint8_t ch in request)
+		if ((quantity > 2000) || (quantity < 1))
 		{
-			_RPT1(_CRT_WARN, "%hhX ", ch);
-		}
-		_RPT0(_CRT_WARN, "\n");
-#endif
-		if (id == BroadcastID)
-		{
-			SendPdu(id, request);
-			return;
+			throw invalid_argument("Quantity of coils out of range");
 		}
 
-		vector<uint8_t> responce = SendPduAndReceive(id, request);
-#ifdef _DEBUG
-		_RPTF0(_CRT_WARN, "Responce:");
-		for each (uint8_t ch in responce)
+		if (id == IDBroadcast)
 		{
-			_RPT1(_CRT_WARN, " %hhX", ch);
-		}
-		_RPT0(_CRT_WARN, "\n");
-#endif
-
-		/**
-		* Check modbus exception.
-		**/
-		if ((responce[0] == (ReadHoldFuncCode | 0x80)) &&
-			(responce.size() == ExceptionPduSize))
-		{
-			ExceptionPdu *erp = (ExceptionPdu*)(responce.data());
-
-			_RPTF1(_CRT_WARN, "Exception code:%hX\n", erp->code);
-
-			throw ExceptionCode(erp->code);
+			throw invalid_argument("Read Coils with broadcast ID");
 		}
 
 		/**
-		* Check PDU responce correction.
-		**/
-		if (request != responce)
+		 * Send request PDU
+		 **/
+		request.push_back((uint8_t)FunctionCodes::ReadCoils);
+		request.push_back(high_byte(addr));
+		request.push_back(low_byte(addr));
+		request.push_back(high_byte(quantity));
+		request.push_back(low_byte(quantity));
+
+		responce = SendPDU(id, request);
+
+		/**
+		 * Check responce PDU
+		 **/
+
+		/**
+		 * Compute expected PDU size
+		 **/
+		int N = ((quantity % 8) == 0) ? quantity / 8 : (quantity / 8) + 1;
+		int pduSize = N + 2;
+
+		if ((responce.size() != pduSize) ||
+			(responce[0] != request[0]) ||
+			(responce[1] != N))
 		{
-			throw InvalidResponcePdu(request, responce);
+			throw EPDUFrameError(request, responce);
 		}
 
-		_RPTF0(_CRT_WARN, "Function complete\n");
+		/**
+		 * Parse and form coils status
+		 **/
+		vector<bool> coils;
 
+		for (vector<uint8_t>::const_iterator i = responce.cbegin() + 2;
+			i != responce.cend();
+			i++)
+		{
+			uint8_t byte = *i;
+			for (int j = 0; j < 7; j++)
+			{
+				bool b = 0x01 & (byte >> j);
+				coils.push_back(b);
+			}
+		}
+
+		return coils;
 	}
-
-	/**
-	* Modbus Read Hold from device 0
-	**/
-	void Master::ReadHoldDev0(
-		uint8_t id,
-		uint16_t regStartAddr,
-		uint8_t regsNum,
-		uint8_t* regsValue
-		)
-	{
-		_RPTF4(_CRT_WARN, "Master::ReadHoldDev0(%hhu, %hX, %hhX, %p)\n", id, regStartAddr, regsNum, regsValue);
-
-		assert(regsValue);
-		
-		if (id == BroadcastID)
-		{
-			throw std::logic_error("Broadcast ReadHold reques.\n");
-		}
-
-		ReadHoldDev0RequestPdu reqPdu;
-		reqPdu.func = ReadHoldDev0FuncCode;
-		reqPdu.count = regsNum;
-		reqPdu.addr = _byteswap_ushort(regStartAddr);
-
-		vector<uint8_t> request((uint8_t*)&reqPdu, (uint8_t*)&reqPdu + sizeof(reqPdu));
-#ifdef _DEBUG
-		_RPTF0(_CRT_WARN, "Request PDU:");
-		for each (uint8_t ch in request)
-		{
-			_RPT1(_CRT_WARN, "%hhX ", ch);
-		}
-		_RPT0(_CRT_WARN, "\n");
-#endif
-
-		vector<uint8_t> responce = SendPduAndReceive(id, request);
-
-#ifdef _DEBUG
-		_RPTF0(_CRT_WARN, "Responce PDU:");
-		for each (uint8_t ch in responce)
-		{
-			_RPT1(_CRT_WARN, "%hhX ", ch);
-		}
-		_RPT0(_CRT_WARN, "\n");
-#endif
-		/**
-		* Check modbus exception.
-		**/
-		if ((responce[0] == (ReadHoldFuncCode | 0x80)) &&
-			(responce.size() == ExceptionPduSize))
-		{
-			ExceptionPdu *erp = (ExceptionPdu*)(responce.data());
-
-			_RPTF1(_CRT_WARN, "Exception code:%hX\n", erp->code);
-
-			throw ExceptionCode(erp->code);
-		}
-
-		/**
-		* Check responce PDU correction
-		**/
-		const int expectedRespSize = 2 + regsNum;
-		if (expectedRespSize != responce.size())
-		{
-			_RPTF0(_CRT_WARN, "Responce PDU have incorrect format.\n");
-			throw InvalidResponcePdu(request, responce);
-		}
-
-		ReadHoldDev0ResponcePdu *respPdu = (ReadHoldDev0ResponcePdu *)responce.data();
-		if (respPdu->func != ReadHoldDev0FuncCode ||
-			respPdu->count != regsNum)
-		{
-			_RPTF0(_CRT_WARN, "Responce PDU have incorrect format.\n");
-			throw InvalidResponcePdu(request, responce);
-		}
-
-		/**
-		* Copy registers data
-		**/
-		for (int i = 0; i < regsNum; i++)
-		{
-			regsValue[i] = respPdu->data[i];
-		}
-
-		_RPTF0(_CRT_WARN, "Function complete\n");
-	}
-
-	void Master::ReadHold(
-		uint8_t id, 
-		uint16_t regsStartAddr, 
-		uint16_t regsNumber, 
-		uint16_t* regsValue)
-	{
-		_RPTF4(_CRT_WARN, "Master::ReadHold(%hhu, %hu, %hu, %p)\n", id, regsStartAddr, 
-			regsNumber, regsValue);
-
-		assert(regsValue);
-		assert(regsNumber <= ReadHoldMaxRegisters);
-		
-		if (id == BroadcastID)
-		{
-			throw std::logic_error("Broadcast ReadHold reques.\n");
-		}
-
-		ReadHoldRequestPdu reqPdu;
-
-		// Store Request PDU
-		reqPdu.func = ReadHoldFuncCode;
-		reqPdu.addr = _byteswap_ushort(regsStartAddr);
-		reqPdu.count = _byteswap_ushort(regsNumber);
-
-		vector<uint8_t> request((uint8_t*)&reqPdu, (uint8_t*)&reqPdu + sizeof(reqPdu));
-
-#ifdef _DEBUG
-		_RPTF0(_CRT_WARN, "Request PDU:");
-		for each (uint8_t ch in request)
-		{
-			_RPT1(_CRT_WARN, "%hhX ", ch);
-		}
-		_RPT0(_CRT_WARN, "\n");
-#endif
-
-		vector<uint8_t> responce = SendPduAndReceive(id, request);
-
-#ifdef _DEBUG
-		_RPTF0(_CRT_WARN, "Responce PDU:");
-		for each (uint8_t ch in responce)
-		{
-			_RPT1(_CRT_WARN, "%hhX ", ch);
-		}
-		_RPT0(_CRT_WARN, "\n");
-#endif
-		/**
-		 * Check modbus exception.
-		 **/
-		if ((responce[0] & ExceptionFlag)		&&
-			(responce.size() == ExceptionPduSize))
-		{
-			ExceptionPdu *erp = (ExceptionPdu*)(responce.data());
-
-			_RPTF1(_CRT_WARN, "Exception code:%hX\n", erp->code);
-
-			throw ExceptionCode(erp->code);
-		}
-
-		/**
-		 * Check responce PDU correction
-		 **/
-		const int expectedRespSize = 2 + regsNumber * 2;
-		if (expectedRespSize != responce.size())
-		{
-			_RPTF0(_CRT_WARN, "Responce PDU have incorrect format.\n");
-			throw InvalidResponcePdu(request, responce);
-		}
-
-		ReadHoldResponcePdu *respPdu = (ReadHoldResponcePdu *)responce.data();
-
-		if ((respPdu->func != ReadHoldFuncCode)	||
-			(respPdu->count != regsNumber*2))
-		{
-			_RPTF0(_CRT_WARN, "Responce PDU have incorrect format.\n");
-			throw InvalidResponcePdu(request, responce);
-		}
-
-		/**
-		 * Copy registers data 
-		 **/
-		for (int i = 0; i < regsNumber; i++)
-		{
-			regsValue[i] = _byteswap_ushort(respPdu->data[i]);
-		}
-	}
-
-	/**
-	* Modbus request Write Single
-	**/
-	void Master::WriteSingle(uint8_t id, uint16_t regAddr, uint16_t regValue)
-	{
-		WriteSinglePdu reqPdu;
-
-		_RPTF3(_CRT_WARN, "Master::WriteSingle(%hhu, %hu, %hu)\n", id, regAddr, regValue);
-
-		reqPdu.func = WriteSingleFuncCode;
-		reqPdu.addr = _byteswap_ushort(regAddr);
-		reqPdu.value = _byteswap_ushort(regValue);
-
-		vector<uint8_t> request((uint8_t*)&reqPdu, (uint8_t*)&reqPdu + sizeof(WriteSinglePdu));
-
-#ifdef _DEBUG
-		_RPTF0(_CRT_WARN, "Request:");
-		for each (uint8_t ch in request)
-		{
-			_RPT1(_CRT_WARN, " %hhX", ch);
-		}
-		_RPT0(_CRT_WARN, "\n");
-#endif
-		
-		if (id == BroadcastID)
-		{
-			SendPdu(id, request);
-			return;
-		}
-
-		vector<uint8_t> responce = SendPduAndReceive(id, request);
-
-#ifdef _DEBUG
-		_RPTF0(_CRT_WARN, "Responce:");
-		for each (uint8_t ch in responce)
-		{
-			_RPT1(_CRT_WARN, " %hhX", ch);
-		}
-		_RPT0(_CRT_WARN, "\n");
-#endif
-
-		/**
-		 * Check modbus exception
-		 **/
-		if ((responce.size() == ExceptionPduSize) && 
-			(responce[0] & ExceptionFlag))
-		{
-			ExceptionPdu *ep = (ExceptionPdu*)(responce.data());
-
-			_RPTF1(_CRT_WARN, "Exception code: %hX\n", ep->code);
-
-			throw ExceptionCode(ep->code);
-		}
-
-		/**
-		 * Check PDU responce correction.
-		 **/
-		if (request != responce)
-		{
-			_RPT0(_CRT_WARN, "Invalid responce PDU\n");
-			throw InvalidResponcePdu(request, responce);
-		}
-		_RPTF0(_CRT_WARN, "Function complete\n");
-	}
-
 }

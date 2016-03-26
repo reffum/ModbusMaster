@@ -32,6 +32,8 @@
 
 Master/Debug
 Master/Release
+DbgStream/Debug
+DbgStream/Release
 DLL/Debug
 DLL/Release
 /Debug

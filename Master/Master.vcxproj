@@ -77,15 +77,13 @@
   <ItemGroup>
     <ClInclude Include="src\AsciiFdu.h" />
     <ClInclude Include="src\Master.h" />
+    <ClInclude Include="src\mb_exceptions.h" />
     <ClInclude Include="src\ModbusMasterAsciiTCP.h" />
     <ClInclude Include="src\Serial.h" />
     <ClInclude Include="src\Tcp.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\AsciiFdu.cpp" />
     <ClCompile Include="src\Master.cpp" />
-    <ClCompile Include="src\Serial.cpp" />
-    <ClCompile Include="src\Tcp.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

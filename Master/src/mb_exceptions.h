@@ -20,9 +20,6 @@ namespace Modbus
 	public:
 		EPDUFrameError(std::vector<uint8_t> request, 
 			std::vector<uint8_t> responce);
-
-		std::vector<uint8_t> GetRequest() const;
-		std::vector<uint8_t> GetResponce() const;
 	};
 
 	/**
@@ -31,6 +28,16 @@ namespace Modbus
 	class ETimeout : public std::exception
 	{
 
+	};
+
+	/**
+	 * Diagnostic exception
+	 **/
+	class EDiagnostic : public std::exception
+	{
+	public:
+		EDiagnostic(std::vector<uint8_t> requestData,
+			std::vector<uint8_t> responceData);
 	};
 
 	/**

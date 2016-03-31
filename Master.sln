@@ -1,13 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.40629.0
+VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Master", "Master\Master.vcxproj", "{1A407ADF-BD8F-4F98-82B6-46B8F28D2EA0}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DLL", "DLL\DLL.vcxproj", "{2AC51377-52E4-4F09-9E45-8CD407813CEC}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DbgStream", "DbgStream\DbgStream.vcxproj", "{8023B6BD-75CC-4D84-812A-5C8228E413CC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +21,6 @@ Global
 		{2AC51377-52E4-4F09-9E45-8CD407813CEC}.Debug|Win32.Build.0 = Debug|Win32
 		{2AC51377-52E4-4F09-9E45-8CD407813CEC}.Release|Win32.ActiveCfg = Release|Win32
 		{2AC51377-52E4-4F09-9E45-8CD407813CEC}.Release|Win32.Build.0 = Release|Win32
-		{8023B6BD-75CC-4D84-812A-5C8228E413CC}.Debug|Win32.ActiveCfg = Debug|Win32
-		{8023B6BD-75CC-4D84-812A-5C8228E413CC}.Debug|Win32.Build.0 = Debug|Win32
-		{8023B6BD-75CC-4D84-812A-5C8228E413CC}.Release|Win32.ActiveCfg = Release|Win32
-		{8023B6BD-75CC-4D84-812A-5C8228E413CC}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -22,13 +22,26 @@ namespace Modbus
 		static const int NumberOfExceptionStatusOutputs = 8;
 		static const uint8_t IDBroadcast = 0xFF;
 		static const int PDU_MAX_SIZE = 253;
+		static const int ExceptionResponcePDUSize = 2;
+
+		/**
+		 * Types
+		 **/
+		typedef std::vector<uint8_t>::const_iterator PDUConstIterator;
 
 		/**
 		 * Modbus function codes
 		 **/
 		enum class FunctionCodes : uint8_t
 		{
-			ReadCoils = 0x01
+			ReadCoils = 0x01,
+			ReadDiscreteInputs = 0x02,
+			ReadHoldingRegisters = 0x03,
+			ReadInputRegisters = 0x04,
+			WriteSingleCoil = 0x05,
+			WriteSingleRegister = 0x06,
+			ReadExceptionStatus = 0x07,
+			Diagnostic = 0x08
 		};
 
 		/**
@@ -152,8 +165,9 @@ namespace Modbus
 		 * quantity:	Quantity of colils(1-2000)
 		 * Return:		bit vector with coils status.
 		 * Exceptions:	invalid_argument if quantity is out of range 1-2000.
+		 *				invalid_argument if id is broadcast
 		 **/
-		std::vector<bool> ReadCoils(uint8_t id, uint16_t addr, unsigned quantity);
+		std::vector<bool> ReadCoils(const uint8_t id, const uint16_t addr, const unsigned quantity);
 
 		/**
 		 * Read Discrete Inputs(02)
@@ -161,8 +175,9 @@ namespace Modbus
 		 * quantity:	Quantity of inputs(1-2000)
 		 * Return:		bit vector with inputs status.
 		 * Exceptions:	invalid_argument if quantity is out of range 1-2000.
+		 *				invalid_argument if id is broadcast
 		 * */
-		std::vector<bool> ReadDiscreteInputs(uint8_t id, uint16_t addr, unsigned quantity);
+		std::vector<bool> ReadDiscreteInputs(const uint8_t id, const uint16_t addr, const unsigned quantity);
 
 		/**
 		 * Read Holding Registers(03)
@@ -170,8 +185,9 @@ namespace Modbus
 		 * quantity:	quantity of registers(1-125)
 		 * Return:		vector of registers.
 		 * Exceptions:	invalid_argument if quantity is out of range(1-125)
+		 *				invalid_argument if id is broadcast
 		 **/
-		std::vector<uint16_t> ReadHoldingRegisters(uint8_t id, uint16_t addr, unsigned quantity);
+		std::vector<uint16_t> ReadHoldingRegisters(const uint8_t id, const uint16_t addr, const unsigned quantity);
 
 		/**
 		 * Read Input Registers(04)
@@ -179,29 +195,31 @@ namespace Modbus
 		 * quantity:	quantity of input registers(1-125)
 		 * Return:		vector of registers
 		 * Exceptions:	invalid_argument if quantity is out of range(1-125)
+		 *				invalid_argument if id is broadcast
 		 **/
-		std::vector<uint16_t> ReadInputRegisters(uint8_t id, uint16_t addr, unsigned quantity);
+		std::vector<uint16_t> ReadInputRegisters(const uint8_t id, const uint16_t addr, const unsigned quantity);
 
 		/**
 		 * Write Single Coil(05)
 		 * addr:		Coil address
 		 * value:		Coil value
 		 **/
-		void WriteSingleCoil(uint8_t id, uint16_t addr, bool value);
+		void WriteSingleCoil(const uint8_t id, const uint16_t addr, const bool value);
 
 		/**
 		 * Write Single Register(06)
 		 * addr:		Address
 		 * value:		Value
 		 **/
-		void WriteSingleRegister(uint8_t id, uint16_t addr, uint16_t value);
+		void WriteSingleRegister(const uint8_t id, const uint16_t addr, const uint16_t value);
 
 		/**
 		 * Read Exception Status(07)(Serial only)
 		 * Return:	exception status
+		 * Exception: invalid_argument if id is broadcast.
 		 **/
 		std::bitset<NumberOfExceptionStatusOutputs>
-			ReadExceptionStatus(uint8_t id);
+			ReadExceptionStatus(const uint8_t id);
 
 		/**
 		 * Diagnostics functions(08)(Serial only)
@@ -210,26 +228,28 @@ namespace Modbus
 		 * subFunstion:		sub-function code
 		 * data:			function data
 		 * Return:			data from responce
+		 * Exception:		invalid_argument if PDU size if more then maximum.
 		 **/
-		std::vector<uint8_t> Diagnostic(uint8_t id, uint16_t subFunction, std::vector<uint16_t> data);
+		std::vector<uint8_t> Diagnostic(const uint8_t id, const uint16_t subFunction, const std::vector<uint8_t> data);
 
 		/**
 		 * Return query data(00)
+		 * data:	Any test data.
 		 * Return:	true - OK, false - error
 		 **/
-		bool ReturnQueryData(uint8_t id);
+		bool ReturnQueryData(const uint8_t id, const std::vector<uint8_t> data);
 
 		/**
 		 * Restart Communications Options(01)
 		 * clearLog:	if true, communication event log must also be cleared
 		 **/
-		void RestartCommunicationOptions(uint8_t id, bool clearLog);
+		void RestartCommunicationOptions(const uint8_t id, const bool clearLog);
 
 		/**
 		 * Return Diagnostic Register(02)
 		 * Return:	Diagnostic register
 		 **/
-		uint16_t ReturnDiagnosticRegister(uint8_t id);
+		uint16_t ReturnDiagnosticRegister(const uint8_t id);
 
 		/**
 		 * Change ASCII delimeter(03)
@@ -384,6 +404,19 @@ namespace Modbus
 		 * Send PDU and no wait responce.
 		 **/
 		virtual void SendPDU(std::vector<uint8_t> request);
+
+	private:
+		/**
+		 * Check responce PDU for exceptions
+		 * Raise EException if PDU is MODBUS exception. 
+		 * funcCode		Function code in request PDU.
+		 **/
+		void checkForException(const std::vector<uint8_t> request, const std::vector<uint8_t> responce);
+
+		/**
+		* Return Exception Function code for MODBUS function code
+		**/
+		uint8_t exceptionCodeFor(FunctionCodes code);
 	};
 }
 

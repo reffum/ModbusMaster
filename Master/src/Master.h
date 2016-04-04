@@ -255,59 +255,59 @@ namespace Modbus
 		 * Change ASCII delimeter(03)
 		 * delim:	new ASCII delimeter
 		 **/
-		void ChangeASCIIDelimeter(uint8_t id, char delim);
+		void ChangeASCIIDelimeter(const uint8_t id, const unsigned char delim);
 
 		/**
 		 * Force Listen Only Mode(04)
 		 **/
-		void ForceListenOnlyMode(uint8_t id);
+		void ForceListenOnlyMode(const uint8_t id);
 
 		/**
 		* Clear Counters and Diagnostic Register(0A)
 		**/
-		void ClearCountersAndDiagnosticRegister(uint8_t id);
+		void ClearCountersAndDiagnosticRegister(const uint8_t id);
 
 		/**
 		 * Return bus message count(0B)
 		 * Return: bus message count
 		 **/
-		uint64_t ReturnBusMessageCount(uint8_t id);
+		uint64_t ReturnBusMessageCount(const uint8_t id);
 
 		/**
 		 * Return Bus Communication Error Count(0C)
 		 * Return: CRC error count
 		 **/
-		uint64_t ReturnBusCommunicationErrorCount(uint8_t id);
+		uint64_t ReturnBusCommunicationErrorCount(const uint8_t id);
 
 		/**
 		 * Return Bus Exception Error Count(0D)
 		 **/
-		uint64_t ReturnBusExceptionErrorCount(uint8_t id);
+		uint64_t ReturnBusExceptionErrorCount(const uint8_t id);
 		 
 		/**
 		 * Return Server Message Count(0E)
 		 **/
-		uint64_t ReturnServerMessageCount(uint8_t id);
+		uint64_t ReturnServerMessageCount(const uint8_t id);
 
 		/**
 		 * Return Server No Responce Count(0F)
 		 **/
-		uint64_t ReturnServerNoResponceCount(uint8_t id);
+		uint64_t ReturnServerNoResponceCount(const uint8_t id);
 
 		/**
 		 * Return Server NAK Count(10)
 		 **/
-		uint64_t ReturnServerNAKCount(uint8_t id);
+		uint64_t ReturnServerNAKCount(const uint8_t id);
 
 		/**
 		 * Return Server Busy Count(11)
 		 **/
-		uint64_t ReturnServerBusyCount(uint8_t id);
+		uint64_t ReturnServerBusyCount(const uint8_t id);
 
 		/**
 		 * Return Bus Character Overrun Count(12)
 		 **/
-		uint64_t ReturnBusCharacterOverrunCount(uint8_t id);
+		uint64_t ReturnBusCharacterOverrunCount(const uint8_t id);
 
 		/**
 		 * Clear Overrurn Counter and Flag(14)
@@ -406,6 +406,11 @@ namespace Modbus
 		virtual void SendPDU(std::vector<uint8_t> request);
 
 	private:
+		/**
+		 * Get counters function
+		 **/
+		uint64_t getCounter(const uint8_t id, const DiagnosticSubFunctions);
+
 		/**
 		 * Check responce PDU for exceptions
 		 * Raise EException if PDU is MODBUS exception. 

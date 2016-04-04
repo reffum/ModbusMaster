@@ -536,6 +536,185 @@ namespace Modbus
 	}
 
 	/**
+	* Change ASCII delimeter(03)
+	* delim:	new ASCII delimeter
+	**/
+	void Master::ChangeASCIIDelimeter(const uint8_t id, const unsigned char delim)
+	{
+		vector<uint8_t> requestData, responceData;
+		/**
+		* Check parameters
+		**/
+		if (id == IDBroadcast)
+		{
+			throw invalid_argument("Return Query Data with broadcast ID.");
+		}
+
+		requestData = { delim, 0 };
+
+		responceData = Diagnostic(
+			id, 
+			(uint16_t)DiagnosticSubFunctions::ChangeASCIIInputDelimeter, 
+			{ delim, 0 }
+		);
+
+		if (responceData != requestData)
+		{
+			throw EDiagnostic(requestData, responceData);
+		}
+	}
+
+	/**
+	* Force Listen Only Mode(04)
+	**/
+	void Master::ForceListenOnlyMode(const uint8_t id)
+	{
+		vector<uint8_t> requestData = { 0, 0 };
+
+		/**
+		* Check parameters
+		**/
+		if (id == IDBroadcast)
+		{
+			throw invalid_argument("Return Query Data with broadcast ID.");
+		}
+
+		/**
+		 * No responce returned.
+		 **/
+		Diagnostic(id, (uint16_t)DiagnosticSubFunctions::ForceListenOnlyMode, requestData);
+	}
+
+	/**
+	* Clear Counters and Diagnostic Register(0A)
+	**/
+	void Master::ClearCountersAndDiagnosticRegister(const uint8_t id)
+	{
+		vector<uint8_t> requestData = { 0, 0 };
+		/**
+		* Check parameters
+		**/
+		if (id == IDBroadcast)
+		{
+			throw invalid_argument("Return Query Data with broadcast ID.");
+		}
+
+		vector<uint8_t> responceData = Diagnostic(
+			id,
+			(uint16_t)DiagnosticSubFunctions::ClearCountersAndDiagnosticRegister,
+			requestData
+			);
+		if (requestData != responceData)
+		{
+			throw EDiagnostic(requestData, responceData);
+		}
+	}
+
+	/**
+	* Return bus message count(0B)
+	* Return: bus message count
+	**/
+	uint64_t Master::ReturnBusMessageCount(const uint8_t id)
+	{
+		return getCounter(id, DiagnosticSubFunctions::ReturnBusMessageCount);
+	}
+
+	/**
+	* Return Bus Communication Error Count(0C)
+	* Return: CRC error count
+	**/
+	uint64_t Master::ReturnBusCommunicationErrorCount(const uint8_t id)
+	{
+		return getCounter(id, DiagnosticSubFunctions::ReturnBusCommunicationError);
+	}
+
+	/**
+	* Return Bus Exception Error Count(0D)
+	**/
+	uint64_t Master::ReturnBusExceptionErrorCount(const uint8_t id)
+	{
+		return getCounter(id, DiagnosticSubFunctions::ReturnBusExceptionErrorCount);
+	}
+
+	/**
+	* Return Server Message Count(0E)
+	**/
+	uint64_t Master::ReturnServerMessageCount(const uint8_t id)
+	{
+		return getCounter(id, DiagnosticSubFunctions::ReturnServerMessageCount);
+	}
+
+	/**
+	* Return Server No Responce Count(0F)
+	**/
+	uint64_t Master::ReturnServerNoResponceCount(const uint8_t id)
+	{
+		return getCounter(id, DiagnosticSubFunctions::ReturnServerNoResponceCount);
+	}
+
+	/**
+	* Return Server NAK Count(10)
+	**/
+	uint64_t Master::ReturnServerNAKCount(const uint8_t id)
+	{
+		return getCounter(id, DiagnosticSubFunctions::ReturnSrverNAKCount);
+	}
+
+	/**
+	* Return Server Busy Count(11)
+	**/
+	uint64_t ReturnServerBusyCount(const uint8_t id);
+
+	/**
+	* Return Bus Character Overrun Count(12)
+	**/
+	uint64_t ReturnBusCharacterOverrunCount(const uint8_t id);
+
+
+	/**
+	 * Private functions
+	 **/
+
+	/**
+	* Get counters function
+	**/
+	uint64_t Master::getCounter(const uint8_t id, const DiagnosticSubFunctions subFunction)
+	{
+		vector<uint8_t> requestData = { 0, 0 };
+		/**
+		* Check parameters
+		**/
+		if (id == IDBroadcast)
+		{
+			throw invalid_argument("Return counter with broadcast ID.");
+		}
+
+		vector<uint8_t> responceData = Diagnostic(
+			id,
+			(uint16_t)subFunction,
+			requestData
+			);
+
+		if (responceData.size() == 0)
+		{
+			EDiagnostic(requestData, responceData);
+		}
+
+		/**
+		* Responce data contain message count, and it size is variable.
+		* It can contain more than 8 bytes. In this case, the function return low 8 byte
+		* only .
+		**/
+		uint64_t counter = 0;
+		for (unsigned i = 0; i < responceData.size() && i < 8; i++)
+		{
+			counter += ((uint64_t)responceData[i] << i * 8);
+		}
+
+		return counter;
+	}
+
+	/**
 	* Check responce PDU for exceptions
 	* Raise EException if PDU is MODBUS exception.
 	* funcCode		Function code in request PDU.

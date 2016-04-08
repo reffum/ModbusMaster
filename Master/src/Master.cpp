@@ -749,6 +749,26 @@ namespace Modbus
 			throw invalid_argument("Read request with broadcast ID.");
 		}
 
+		const vector<uint8_t> requestPDU = { (uint8_t)FunctionCodes::GetCommEventLog };
+
+		vector<uint8_t> responcePDU = SendPDU(id, requestPDU);
+
+		checkForException(requestPDU, responcePDU);
+
+		/**
+		 * Check responce PDU correction.
+		 **/
+		const int MinResponcePDUSize = 6;
+		if (responcePDU.size() < MinResponcePDUSize)
+			throw EPDUFrameError(requestPDU, responcePDU);
+
+		uint8_t N = responcePDU[1];
+
+		if (responcePDU.size() != N)
+			throw EPDUFrameError(requestPDU, responcePDU);
+
+		CommEventLog commEventLog;
+
 
 	}
 

@@ -42,7 +42,8 @@ namespace Modbus
 			WriteSingleRegister = 0x06,
 			ReadExceptionStatus = 0x07,
 			Diagnostic = 0x08,
-			GetCommEventCounter = 0x0B
+			GetCommEventCounter = 0x0B,
+			GetCommEventLog = 0x0C
 		};
 
 		/**

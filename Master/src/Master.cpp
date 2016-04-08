@@ -663,12 +663,94 @@ namespace Modbus
 	/**
 	* Return Server Busy Count(11)
 	**/
-	uint64_t ReturnServerBusyCount(const uint8_t id);
+	uint64_t Master::ReturnServerBusyCount(const uint8_t id)
+	{
+		return getCounter(id, DiagnosticSubFunctions::ReturnServerBusyCount);
+	}
 
 	/**
 	* Return Bus Character Overrun Count(12)
 	**/
-	uint64_t ReturnBusCharacterOverrunCount(const uint8_t id);
+	uint64_t Master::ReturnBusCharacterOverrunCount(const uint8_t id)
+	{
+		return getCounter(id, DiagnosticSubFunctions::ReturnBusCharacterOverrun);
+	}
+
+	/**
+	* Clear Overrurn Counter and Flag(14)
+	**/
+	void Master::ClearOverrunCounterAndFlag(const uint8_t id)
+	{
+		vector<uint8_t> requestData = { 0, 0 }, responceData;
+		Diagnostic(id, (uint16_t)DiagnosticSubFunctions::ClearOverrunCounterAndFlag, requestData);
+
+		if (requestData != responceData)
+		{
+			throw EDiagnostic(requestData, responceData);
+		}
+	}
+
+	/**
+	* Get Comm Event Counter(0B)
+	* Return:	Comm event counter structure.
+	**/
+	Master::CommEventCounter Master::GetCommEventCounter(const uint8_t id)
+	{
+		const vector<uint8_t> requestPDU = { (uint8_t)FunctionCodes::GetCommEventCounter };
+
+		if (id == IDBroadcast)
+		{
+			throw invalid_argument("Read request for broadcast ID.");
+		}
+
+		vector<uint8_t> responcePDU = SendPDU(id, requestPDU);
+
+		checkForException(requestPDU, responcePDU);
+
+		/**
+		 * Check responce PDU correction
+		 **/
+		const int responcePDUSize = 5;
+		if (responcePDU.size() != responcePDUSize)
+		{
+			EPDUFrameError(requestPDU, responcePDU);
+		}
+
+		uint16_t statusWord;
+		uint16_t counter;
+
+		statusWord = ((uint16_t)responcePDU[1] << 8) | responcePDU[2];
+		counter = ((uint16_t)responcePDU[3] << 8) | responcePDU[4];
+
+		const uint16_t StatusWordTrue = 0xFFFF;
+		const uint16_t StatusWordFalse = 0x0000;
+
+		CommEventCounter cec;
+
+		if (statusWord == StatusWordTrue)
+			cec.status = CommStatus::LastCommandStillProcessed;
+		else if (statusWord == StatusWordFalse)
+			cec.status = CommStatus::LastCommandComplete;
+		else
+			throw EPDUFrameError(requestPDU, responcePDU);
+
+		cec.eventCount = counter;
+
+		return cec;
+	}
+
+	/**
+	* Get Comm Event Log(0C) (Serial Only)
+	**/
+	Master::CommEventLog Master::GetCommEventLog(const uint8_t id)
+	{
+		if (id == IDBroadcast)
+		{
+			throw invalid_argument("Read request with broadcast ID.");
+		}
+
+
+	}
 
 
 	/**

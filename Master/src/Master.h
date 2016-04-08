@@ -41,7 +41,8 @@ namespace Modbus
 			WriteSingleCoil = 0x05,
 			WriteSingleRegister = 0x06,
 			ReadExceptionStatus = 0x07,
-			Diagnostic = 0x08
+			Diagnostic = 0x08,
+			GetCommEventCounter = 0x0B
 		};
 
 		/**
@@ -312,18 +313,18 @@ namespace Modbus
 		/**
 		 * Clear Overrurn Counter and Flag(14)
 		 **/
-		void ClearOverrunCounterAndFlag(uint8_t id);
+		void ClearOverrunCounterAndFlag(const uint8_t id);
 
 		/**
 		 * Get Comm Event Counter(0B)
 		 * Return:	Comm event counter structure.
 		 **/
-		CommEventCounter GetCommEventCounter(uint8_t id, bool& status);
+		CommEventCounter GetCommEventCounter(const uint8_t id);
 
 		/**
 		 * Get Comm Event Log(0C) (Serial Only)
 		 **/
-		CommEventLog GetCommventLog(uint8_t id);
+		CommEventLog GetCommEventLog(const uint8_t id);
 
 		/**
 		 * Write Multiple Coils(0F)
